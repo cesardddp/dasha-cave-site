@@ -1,0 +1,24 @@
+:root {
+  --font-display: "Permanent Marker", cursive;
+  --color-page-background: linear-gradient(165deg, #2e9974 0%, #111417 50%, #060809 100%);
+}
+
+html,
+body,
+#__nuxt {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+body {
+  background: var(--color-page-background);
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

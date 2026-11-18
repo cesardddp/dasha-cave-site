@@ -15,7 +15,6 @@ const synopsis = [
 
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 const activeSlide = shallowRef(0)
-const preorderBadgePosition = shallowRef<{ x: number, y: number } | null>(null)
 const activeImageAlt = computed(() =>
   activeSlide.value === 0
     ? `Sinopse de Eu Fui uma Boa Garota?: ${synopsis}`
@@ -24,7 +23,6 @@ const activeImageAlt = computed(() =>
 
 function openDialog() {
   activeSlide.value = 0
-  preorderBadgePosition.value = null
   dialog.value?.showModal()
 }
 
@@ -62,16 +60,6 @@ function handleCarouselKeydown(event: KeyboardEvent) {
   }
 }
 
-function movePreorderBadge(event: PointerEvent) {
-  if (event.pointerType !== 'mouse') {
-    return
-  }
-
-  preorderBadgePosition.value = {
-    x: Math.min(event.clientX + 16, window.innerWidth - 132),
-    y: Math.min(event.clientY + 16, window.innerHeight - 52),
-  }
-}
 </script>
 
 <template>
@@ -103,19 +91,15 @@ function movePreorderBadge(event: PointerEvent) {
     aria-label="Eu Fui uma Boa Garota?"
     @click="closeOnBackdrop"
     @keydown="handleCarouselKeydown"
-    @pointermove="movePreorderBadge"
   >
-    <span
-      v-if="preorderBadgePosition"
-      class="featured-book__preorder-badge"
-      aria-hidden="true"
-      :style="{
-        left: `${preorderBadgePosition.x}px`,
-        top: `${preorderBadgePosition.y}px`,
-      }"
+    <NuxtLink
+      class="featured-book__preorder-toast"
+      :to="amazonUrl"
+      target="_blank"
+      rel="noopener noreferrer"
     >
-      Pré-venda
-    </span>
+      Pré-venda disponível! Clique para ver mais
+    </NuxtLink>
     <div class="featured-book__dialog-panel">
       <button
         type="button"
@@ -259,7 +243,6 @@ function movePreorderBadge(event: PointerEvent) {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  padding: 3.75rem 5rem 1.25rem;
 }
 
 .featured-book__dialog-close {
@@ -278,20 +261,34 @@ function movePreorderBadge(event: PointerEvent) {
   line-height: 1;
 }
 
-.featured-book__preorder-badge {
+.featured-book__preorder-toast {
   position: fixed;
-  z-index: 4;
-  padding: 0.55rem 0.8rem;
+  z-index: 5;
+  top: max(1rem, env(safe-area-inset-top));
+  left: 50%;
+  width: max-content;
+  max-width: calc(100vw - 5rem);
+  padding: 0.7rem 1rem;
   border: 1px solid rgb(255 215 160 / 85%);
   border-radius: 999px;
   background: #4a0710;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 45%);
+  box-shadow: 0 4px 18px rgb(0 0 0 / 50%);
   color: #fff3df;
-  font-size: 0.85rem;
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
   font-weight: 700;
-  letter-spacing: 0.02em;
-  pointer-events: none;
-  white-space: nowrap;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+  transform: translateX(-50%);
+  animation: preorder-toast-attention 1.6s ease-in-out infinite;
+}
+
+.featured-book__preorder-toast:hover,
+.featured-book__preorder-toast:focus-visible {
+  border-color: #fff;
+  background: #750f1c;
+  outline: 3px solid #fff;
+  outline-offset: 3px;
 }
 
 .featured-book__carousel {
@@ -320,7 +317,7 @@ function movePreorderBadge(event: PointerEvent) {
   width: auto;
   height: auto;
   max-width: calc(100vw - 2rem);
-  max-height: calc(100dvh - 7rem);
+  max-height: calc(100dvh - 2rem);
   object-fit: contain;
 }
 
@@ -374,16 +371,28 @@ function movePreorderBadge(event: PointerEvent) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .featured-book__trigger {
+  .featured-book__trigger,
+  .featured-book__preorder-toast {
     transition: none;
+    animation: none;
+  }
+}
+
+@keyframes preorder-toast-attention {
+  0%, 100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  45%, 60% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.06);
+  }
+  52% {
+    transform: translate(-50%, -8px) scale(1.08);
   }
 }
 
 @media (max-width: 560px) {
-  .featured-book__dialog-panel {
-    padding: 3.5rem 0.5rem 1rem;
-  }
-
   .featured-book__carousel-arrow {
     width: 2.75rem;
     height: 2.75rem;

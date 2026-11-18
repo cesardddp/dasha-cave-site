@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, shallowRef, useTemplateRef } from 'vue'
 
-const amazonUrl = 'https://www.amazon.com.br/dp/B0HRP7B81F'
+const amazonUrl = 'https://www.amazon.com.br/dp/B0HRP7B81F?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_campaign=lancamento_eu_fui_uma_boa_garota'
+
 const launchImages = [
   '/imagens/eu-fui-uma-boa-garota/902586371_18190075666413559_7817302063939449659_n.webp',
   '/imagens/eu-fui-uma-boa-garota/902586310_18190075693413559_5287847086883491344_n.webp',
@@ -96,7 +97,6 @@ function handleCarouselKeydown(event: KeyboardEvent) {
       class="featured-book__preorder-toast"
       :to="amazonUrl"
       target="_blank"
-      rel="noopener noreferrer"
     >
       Pré-venda disponível! Clique para ver mais
     </NuxtLink>
@@ -120,7 +120,6 @@ function handleCarouselKeydown(event: KeyboardEvent) {
           class="featured-book__carousel-link"
           :to="amazonUrl"
           target="_blank"
-          rel="noopener noreferrer"
           :aria-label="`Abrir Eu Fui uma Boa Garota? na Amazon, imagem ${activeSlide + 1}`"
         >
           <NuxtImg

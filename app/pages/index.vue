@@ -11,10 +11,12 @@
     />
 
     <EuFuiUmaBoaGarotaBook />
+
     <NuxtLink
       class="home-page__image-link home-page__image-link--book"
       to="https://www.amazon.com.br/dp/B0HF65B8JV?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_la_calamita"
       aria-label="Conheça La Calamità na Amazon"
+      target="_blank"
     >
       <NuxtImg
         src="/imagens/titulo_capa_la_calamita.png"
@@ -31,6 +33,7 @@
       class="home-page__image-link home-page__image-link--reels"
       to="https://www.amazon.com.br/dp/B0GZLPN6L9?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_afrodite"
       aria-label="Veja o conteúdo de Dasha Cave na Amazon"
+      target="_blank"
     >
       <NuxtImg
         src="/imagens/titulo_capa_afrodite.png"
@@ -44,18 +47,21 @@
       <NuxtLink
         class="home-page__link"
         to="https://www.amazon.com.br/stores/Dasha-Cave/author/B0G86SCW8B?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=vitrine_autora"
+        target="_blank"
       >
         Amazon
       </NuxtLink>
       <NuxtLink
         class="home-page__link"
         to="https://www.instagram.com/autora_dashacave/"
+        target="_blank"
       >
         Instagram
       </NuxtLink>
       <NuxtLink
         class="home-page__link"
         to="https://www.tiktok.com/@autora_dashacave"
+        target="_blank"
       >
         TikTok
       </NuxtLink>
@@ -63,6 +69,7 @@
         disabled
         class="home-page__link"
         to="https://dashacave.com.br/blog/"
+        target="_blank"
       >
         Blog
       </NuxtLink>

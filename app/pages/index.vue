@@ -30,6 +30,20 @@
     </NuxtLink>
 
     <NuxtLink
+      class="home-page__image-link home-page__image-link--trick-me"
+      to="https://www.amazon.com.br/dp/B0HLK3XK71/?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_trick_me"
+      aria-label="Conheça Trick Me: Spin-off de Ange na Amazon"
+      target="_blank"
+    >
+      <NuxtImg
+        src="/imagens/titulo_capa_trick_me.png"
+        alt="Trick Me: Um Spin-off de Ange"
+        width="300"
+        height="169"
+      />
+    </NuxtLink>
+
+    <NuxtLink
       class="home-page__image-link home-page__image-link--reels"
       to="https://www.amazon.com.br/dp/B0GZLPN6L9?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_afrodite"
       aria-label="Veja o conteúdo de Dasha Cave na Amazon"
@@ -186,6 +200,12 @@
   box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
 }
 
+.home-page__image-link--trick-me {
+  border-color: rgb(177 47 57 / 70%);
+  background: linear-gradient(135deg, #190306 0%, #5e0b12 55%, #260307 100%);
+  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
+}
+
 .home-page__link {
   padding: 0.85rem 1.25rem;
   background: linear-gradient(135deg, #0f382a 0%, #1b2622 100%);
@@ -206,6 +226,12 @@
 }
 
 .home-page__image-link--reels:hover {
+  border-color: rgb(239 101 111 / 90%);
+  background: linear-gradient(135deg, #3b070d 0%, #8f151f 55%, #4a080f 100%);
+  box-shadow: 0 0 18px rgb(177 36 48 / 55%);
+}
+
+.home-page__image-link--trick-me:hover {
   border-color: rgb(239 101 111 / 90%);
   background: linear-gradient(135deg, #3b070d 0%, #8f151f 55%, #4a080f 100%);
   box-shadow: 0 0 18px rgb(177 36 48 / 55%);

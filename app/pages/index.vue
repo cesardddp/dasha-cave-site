@@ -10,6 +10,7 @@
       height="300"
     />
 
+    <EuFuiUmaBoaGarotaBook />
     <NuxtLink
       class="home-page__image-link home-page__image-link--book"
       to="https://www.amazon.com.br/dp/B0HF65B8JV"
@@ -237,4 +238,5 @@
     animation: none;
   }
 }
+
 </style>

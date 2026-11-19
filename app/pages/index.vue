@@ -12,6 +12,22 @@
 
     <EuFuiUmaBoaGarotaBook />
 
+    
+
+    <NuxtLink
+      class="home-page__image-link home-page__image-link--trick-me"
+      to="https://www.amazon.com.br/dp/B0HLK3XK71/?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_trick_me"
+      aria-label="Conheça Trick Me: Spin-off de Ange na Amazon"
+      target="_blank"
+    >
+      <NuxtImg
+        src="/imagens/titulo_capa_trick_me.png"
+        alt="Trick Me: Um Spin-off de Ange"
+        width="300"
+        height="169"
+      />
+    </NuxtLink>
+
     <NuxtLink
       class="home-page__image-link home-page__image-link--book"
       to="https://www.amazon.com.br/dp/B0HF65B8JV?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_la_calamita"
@@ -27,20 +43,6 @@
       <span class="home-page__blood" aria-hidden="true">
         <span v-for="drop in 10" :key="drop" class="home-page__blood-drop" />
       </span>
-    </NuxtLink>
-
-    <NuxtLink
-      class="home-page__image-link home-page__image-link--trick-me"
-      to="https://www.amazon.com.br/dp/B0HLK3XK71/?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_trick_me"
-      aria-label="Conheça Trick Me: Spin-off de Ange na Amazon"
-      target="_blank"
-    >
-      <NuxtImg
-        src="/imagens/titulo_capa_trick_me.png"
-        alt="Trick Me: Um Spin-off de Ange"
-        width="300"
-        height="169"
-      />
     </NuxtLink>
 
     <NuxtLink
@@ -192,18 +194,75 @@
 
 .home-page__image-link--book {
   margin-top: 1.5rem;
+  isolation: isolate;
+}
+
+.home-page__image-link--book::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: url("/imagens/titulo_capa_la_calamita_fundo_personagens.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.home-page__image-link--book img {
+  position: relative;
+  z-index: 1;
 }
 
 .home-page__image-link--reels {
+  isolation: isolate;
   border-color: rgb(177 47 57 / 70%);
   background: linear-gradient(135deg, #190306 0%, #5e0b12 55%, #260307 100%);
   box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
 }
 
+.home-page__image-link--reels::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: url("/imagens/titulo_capa_afrodite_fundo_presonagens.png");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.home-page__image-link--reels img {
+  position: relative;
+  z-index: 1;
+}
+
 .home-page__image-link--trick-me {
+  isolation: isolate;
   border-color: rgb(177 47 57 / 70%);
   background: linear-gradient(135deg, #190306 0%, #5e0b12 55%, #260307 100%);
   box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
+}
+
+.home-page__image-link--trick-me::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: url("/imagens/titulo_capa_trick_me_fundo_trix.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.home-page__image-link--trick-me img {
+  position: relative;
+  z-index: 1;
 }
 
 .home-page__link {

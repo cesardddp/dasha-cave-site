@@ -13,8 +13,6 @@
 
     <EuFuiUmaBoaGarotaBook />
 
-    
-
     <NuxtLink
       class="home-page__image-link home-page__image-link--trick-me"
       to="https://www.amazon.com.br/dp/B0HLK3XK71/?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_trick_me"
@@ -31,7 +29,7 @@
     </NuxtLink>
 
     <NuxtLink
-      class="home-page__image-link home-page__image-link--book"
+      class="home-page__image-link home-page__image-la-calamita"
       to="https://www.amazon.com.br/dp/B0HF65B8JV?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_la_calamita"
       aria-label="Conheça La Calamità na Amazon"
       target="_blank"
@@ -49,9 +47,9 @@
     </NuxtLink>
 
     <NuxtLink
-      class="home-page__image-link home-page__image-link--reels"
+      class="home-page__image-link home-page__image-afrodite-ri"
       to="https://www.amazon.com.br/dp/B0GZLPN6L9?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_afrodite"
-      aria-label="Veja o conteúdo de Dasha Cave na Amazon"
+      aria-label="Conheça Afrodite na Amazon"
       target="_blank"
     >
       <NuxtImg
@@ -60,6 +58,20 @@
         :placeholder="[300, 86]"
         width="300"
         height="86"
+      />
+    </NuxtLink>
+
+    <NuxtLink
+      class="home-page__image-link home-page__image-parque"
+      to="https://www.amazon.com.br/dp/B0GTX2DWJZ"
+      aria-label="O Parque dos Pecados: Livro 1 - Série Vittorino na Amazon"
+      target="_blank"
+    >
+      <NuxtImg
+        src="/imagens/titulo_parque_dos_pecados.webp"
+        alt="O Parque dos Pecados"
+        width="1451"
+        height="749"
       />
     </NuxtLink>
 
@@ -145,7 +157,7 @@
   background: linear-gradient(135deg, #005d50 0%, #00626f 100%);
 }
 
-.home-page__image-link--book {
+.home-page__image-la-calamita {
   isolation: isolate;
 }
 
@@ -196,12 +208,11 @@
   height: auto;
 }
 
-.home-page__image-link--book {
-  margin-top: 1.5rem;
+.home-page__image-la-calamita {
   isolation: isolate;
 }
 
-.home-page__image-link--book::before {
+.home-page__image-la-calamita::before {
   position: absolute;
   z-index: 0;
   inset: 0;
@@ -214,19 +225,19 @@
   pointer-events: none;
 }
 
-.home-page__image-link--book img {
+.home-page__image-la-calamita img {
   position: relative;
   z-index: 1;
 }
 
-.home-page__image-link--reels {
+.home-page__image-afrodite-ri {
   isolation: isolate;
   border-color: rgb(177 47 57 / 70%);
   background: linear-gradient(135deg, #190306 0%, #5e0b12 55%, #260307 100%);
   box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
 }
 
-.home-page__image-link--reels::before {
+.home-page__image-afrodite-ri::before {
   position: absolute;
   z-index: 0;
   inset: 0;
@@ -239,7 +250,32 @@
   pointer-events: none;
 }
 
-.home-page__image-link--reels img {
+.home-page__image-afrodite-ri img {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page__image-parque {
+  isolation: isolate;
+  border-color: rgb(228 79 158 / 70%);
+  background: linear-gradient(135deg, #190619 0%, #57144b 55%, #260a2c 100%);
+  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 95 / 30%);
+}
+
+.home-page__image-parque::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: url("/imagens/titulo_parque_dos_pecados_personagens.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.home-page__image-parque img {
   position: relative;
   z-index: 1;
 }
@@ -282,16 +318,22 @@
   transform: translateY(-2px);
 }
 
-.home-page__image-link--book:hover {
+.home-page__image-la-calamita:hover {
   border-color: rgb(126 255 238 / 90%);
   background: linear-gradient(135deg, #008f7d 0%, #00a0b5 100%);
   box-shadow: 0 0 15px rgb(0 210 190 / 45%);
 }
 
-.home-page__image-link--reels:hover {
+.home-page__image-afrodite-ri:hover {
   border-color: rgb(239 101 111 / 90%);
   background: linear-gradient(135deg, #3b070d 0%, #8f151f 55%, #4a080f 100%);
   box-shadow: 0 0 18px rgb(177 36 48 / 55%);
+}
+
+.home-page__image-parque:hover {
+  border-color: rgb(247 151 211 / 90%);
+  background: linear-gradient(135deg, #3c0c36 0%, #8b226e 55%, #4a144e 100%);
+  box-shadow: 0 0 18px rgb(177 36 148 / 55%);
 }
 
 .home-page__image-link--trick-me:hover {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, shallowRef, useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
+import { useCarousel } from '~/composables/useCarousel'
 
 const amazonUrl = 'https://www.amazon.com.br/dp/B0HRP7B81F?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_campaign=lancamento_eu_fui_uma_boa_garota'
 
@@ -15,7 +16,17 @@ const synopsis = [
 ].join(' ')
 
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
-const activeSlide = shallowRef(0)
+const {
+  activeSlide,
+  cancelSwipe,
+  finishSwipe,
+  handleKeydown: handleCarouselKeydown,
+  reset: resetCarousel,
+  selectSlide,
+  showNextSlide,
+  showPreviousSlide,
+  startSwipe,
+} = useCarousel(launchImages.length)
 const activeImageAlt = computed(() =>
   activeSlide.value === 0
     ? `Sinopse de Eu Fui uma Boa Garota?: ${synopsis}`
@@ -23,7 +34,7 @@ const activeImageAlt = computed(() =>
 )
 
 function openDialog() {
-  activeSlide.value = 0
+  resetCarousel()
   dialog.value?.showModal()
 }
 
@@ -37,25 +48,8 @@ function closeOnBackdrop(event: MouseEvent) {
   }
 }
 
-function showPreviousSlide() {
-  activeSlide.value = (activeSlide.value - 1 + launchImages.length) % launchImages.length
-}
-
-function showNextSlide() {
-  activeSlide.value = (activeSlide.value + 1) % launchImages.length
-}
-
-function selectSlide(index: number) {
-  activeSlide.value = index
-}
-
-function handleCarouselKeydown(event: KeyboardEvent) {
-  if (event.key === 'ArrowLeft') {
-    showPreviousSlide()
-  }
-  if (event.key === 'ArrowRight') {
-    showNextSlide()
-  }
+function handleDialogKeydown(event: KeyboardEvent) {
+  handleCarouselKeydown(event)
   if (event.key === 'Escape') {
     closeDialog()
   }
@@ -93,7 +87,7 @@ function handleCarouselKeydown(event: KeyboardEvent) {
     class="featured-book__dialog"
     aria-label="Eu Fui uma Boa Garota?"
     @click="closeOnBackdrop"
-    @keydown="handleCarouselKeydown"
+    @keydown="handleDialogKeydown"
   >
     <NuxtLink
       class="featured-book__preorder-toast"
@@ -118,22 +112,24 @@ function handleCarouselKeydown(event: KeyboardEvent) {
         aria-label="Fotos de Eu Fui uma Boa Garota?"
         aria-live="polite"
       >
-        <NuxtLink
-          class="featured-book__carousel-link"
-          :to="amazonUrl"
-          target="_blank"
-          :aria-label="`Abrir Eu Fui uma Boa Garota? na Amazon, imagem ${activeSlide + 1}`"
+        <div
+          class="featured-book__carousel-stage"
+          @pointerdown="startSwipe"
+          @pointerup="finishSwipe"
+          @pointercancel="cancelSwipe"
         >
-          <NuxtImg
-            :key="launchImages[activeSlide]"
-            class="featured-book__carousel-image"
-            :src="launchImages[activeSlide]"
-            :alt="activeImageAlt"
-            :placeholder="[1440, 1800]"
-            width="1440"
-            height="1800"
-          />
-        </NuxtLink>
+          <Transition name="book-image" mode="out-in">
+            <NuxtImg
+              :key="launchImages[activeSlide]"
+              class="featured-book__carousel-image"
+              :src="launchImages[activeSlide]"
+              :alt="activeImageAlt"
+              :placeholder="[1440, 1800]"
+              width="1440"
+              height="1800"
+            />
+          </Transition>
+        </div>
 
         <button
           type="button"
@@ -300,18 +296,14 @@ function handleCarouselKeydown(event: KeyboardEvent) {
   margin: 0 auto;
 }
 
-.featured-book__carousel-link {
+.featured-book__carousel-stage {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #080203;
-}
-
-.featured-book__carousel-link:focus-visible {
-  outline: 3px solid #fff;
-  outline-offset: -6px;
+  touch-action: pan-y;
 }
 
 .featured-book__carousel-image {
@@ -323,19 +315,36 @@ function handleCarouselKeydown(event: KeyboardEvent) {
   object-fit: contain;
 }
 
+.book-image-enter-active,
+.book-image-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.book-image-enter-from,
+.book-image-leave-to {
+  opacity: 0;
+  transform: scale(0.985);
+}
+
 .featured-book__carousel-arrow {
   position: absolute;
   top: 50%;
-  width: 3.25rem;
-  height: 3.25rem;
-  border: 1px solid rgb(244 112 124 / 75%);
-  border-radius: 50%;
-  background: rgb(23 4 6 / 88%);
+  width: 3rem;
+  height: 7rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: #fff;
   cursor: pointer;
-  font-size: 2.25rem;
+  font-size: 4rem;
   line-height: 1;
   transform: translateY(-50%);
+  text-shadow: 0 2px 12px rgb(0 0 0 / 80%);
+}
+
+.featured-book__carousel-arrow:hover {
+  color: #ef707c;
 }
 
 .featured-book__carousel-arrow--previous {
@@ -378,6 +387,11 @@ function handleCarouselKeydown(event: KeyboardEvent) {
     transition: none;
     animation: none;
   }
+
+  .book-image-enter-active,
+  .book-image-leave-active {
+    transition: none;
+  }
 }
 
 @keyframes preorder-toast-attention {
@@ -397,7 +411,8 @@ function handleCarouselKeydown(event: KeyboardEvent) {
 @media (max-width: 560px) {
   .featured-book__carousel-arrow {
     width: 2.75rem;
-    height: 2.75rem;
+    height: 6rem;
+    font-size: 3.5rem;
   }
 
   .featured-book__carousel-arrow--previous {

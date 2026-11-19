@@ -4,8 +4,9 @@
 
     <NuxtImg 
       class="home-page__portrait"
-      src="/imagens/dasha_icon.jpg"
+      src="/imagens/dasha_icon.webp"
       alt="Logo de Dasha Cave"
+      :placeholder="[300, 300]"
       width="300"
       height="300"
     />
@@ -21,8 +22,9 @@
       target="_blank"
     >
       <NuxtImg
-        src="/imagens/titulo_capa_trick_me.png"
+        src="/imagens/titulo_capa_trick_me.webp"
         alt="Trick Me: Um Spin-off de Ange"
+        :placeholder="[300, 169]"
         width="300"
         height="169"
       />
@@ -35,8 +37,9 @@
       target="_blank"
     >
       <NuxtImg
-        src="/imagens/titulo_capa_la_calamita.png"
+        src="/imagens/titulo_capa_la_calamita.webp"
         alt="La Calamità"
+        :placeholder="[300, 178]"
         width="300"
         height="178"
       />
@@ -52,8 +55,9 @@
       target="_blank"
     >
       <NuxtImg
-        src="/imagens/titulo_capa_afrodite.png"
+        src="/imagens/titulo_capa_afrodite.webp"
         alt="Dasha Cave"
+        :placeholder="[300, 86]"
         width="300"
         height="86"
       />
@@ -201,7 +205,7 @@
   position: absolute;
   z-index: 0;
   inset: 0;
-  background-image: url("/imagens/titulo_capa_la_calamita_fundo_personagens.png");
+  background-image: url("/imagens/titulo_capa_la_calamita_fundo_personagens.webp");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -226,7 +230,7 @@
   position: absolute;
   z-index: 0;
   inset: 0;
-  background-image: url("/imagens/titulo_capa_afrodite_fundo_presonagens.png");
+  background-image: url("/imagens/titulo_capa_afrodite_fundo_presonagens.webp");
   background-position: center top;
   background-repeat: no-repeat;
   background-size: cover;
@@ -251,7 +255,7 @@
   position: absolute;
   z-index: 0;
   inset: 0;
-  background-image: url("/imagens/titulo_capa_trick_me_fundo_trix.png");
+  background-image: url("/imagens/titulo_capa_trick_me_fundo_trix.webp");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;

@@ -74,6 +74,7 @@ function handleCarouselKeydown(event: KeyboardEvent) {
       class="featured-book__cover"
       src="/imagens/eu-fui-uma-boa-garota/banner.webp"
       alt="Capa de &quot;Eu Fui uma Boa Garota?&quot;"
+      :placeholder="[300, 404]"
       width="300"
       height="404"
     />
@@ -81,6 +82,7 @@ function handleCarouselKeydown(event: KeyboardEvent) {
       class="featured-book__launch-date"
       src="/imagens/eu-fui-uma-boa-garota/data-lancamento.webp"
       alt="15/12 disponível na Amazon"
+      :placeholder="[1148, 751]"
       width="1148"
       height="751"
     />
@@ -127,6 +129,7 @@ function handleCarouselKeydown(event: KeyboardEvent) {
             class="featured-book__carousel-image"
             :src="launchImages[activeSlide]"
             :alt="activeImageAlt"
+            :placeholder="[1440, 1800]"
             width="1440"
             height="1800"
           />

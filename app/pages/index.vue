@@ -1,3 +1,17 @@
+<script setup lang="ts">
+import { shallowRef } from 'vue'
+
+const bioExpanded = shallowRef(false)
+
+useSeoMeta({
+  title: 'Dasha Cave | Ficção sombria, romance queer e suspense🗝️',
+  description: 'Conheça Dasha Cave, escritora de ficção sombria e romance queer. Livros com horror, paixão, suspense e amores fora do convencional🏳️‍⚧️🏳️‍🌈.',
+  ogTitle: 'Dasha Cave',
+  ogDescription: 'Ficção sombria e romances queer entre o horror e o belo.',
+  ogType: 'website',
+})
+</script>
+
 <template>
   <main class="home-page">
     <h1 class="home-page__title">Dasha Cave</h1>
@@ -6,7 +20,7 @@
       <NuxtImg
         class="home-page__portrait"
         src="/imagens/dasha_icon.webp"
-        alt="Logo de Dasha Cave"
+        alt="Avatar ilustrado de Dasha Cave"
         :placeholder="[300, 300]"
         width="300"
         height="300"
@@ -18,7 +32,81 @@
       <span class="home-page__portrait-bubble home-page__portrait-bubble--right-middle" aria-hidden="true">📚</span>
       <span class="home-page__portrait-bubble home-page__portrait-bubble--right-bottom" aria-hidden="true">🗝️</span>
     </div>
-    
+
+    <section class="home-page__bio" aria-label="Sobre Dasha Cave">
+      <p class="home-page__bio-text">
+        Escritore de mundos sombrios e romances.<br>
+        Entre o horror, o queer e o belo<span v-if="bioExpanded">.</span>
+        <template v-if="!bioExpanded">
+          ... <button
+            class="home-page__bio-toggle home-page__bio-toggle--inline"
+            type="button"
+            :aria-expanded="bioExpanded"
+            aria-controls="dasha-cave-bio-details"
+            @click="bioExpanded = true"
+          >
+            ver mais
+          </button>
+        </template>
+      </p>
+      <div
+        id="dasha-cave-bio-details"
+        class="home-page__bio-details"
+        v-show="bioExpanded"
+      >
+        <p>Capricorniana, parte da comunidade LGBTQIAPN+ e neurodivergente.</p>
+        <p>
+          Com formação em Filosofia e Nutrição, dedico-me à escrita de amores fora do convencional,
+          explorando temas intensos, atmosferas sombrias, suspense e paixão.
+        </p>
+      </div>
+      <button
+        v-if="bioExpanded"
+        class="home-page__bio-toggle"
+        type="button"
+        :aria-expanded="bioExpanded"
+        aria-controls="dasha-cave-bio-details"
+        @click="bioExpanded = false"
+      >
+        Ver menos
+      </button>
+    </section>
+
+    <nav class="home-page__navigation" aria-label="Links da Dasha Cave">
+      <NuxtLink
+        class="home-page__link"
+        to="https://www.amazon.com.br/stores/Dasha-Cave/author/B0G86SCW8B?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=vitrine_autora"
+        target="_blank"
+      >
+        <Icon name="simple-icons:amazon" class="home-page__link-icon" aria-hidden="true" />
+        <span>Amazon</span>
+      </NuxtLink>
+      <NuxtLink
+        class="home-page__link"
+        to="https://www.instagram.com/autora_dashacave/"
+        target="_blank"
+      >
+        <Icon name="simple-icons:instagram" class="home-page__link-icon" aria-hidden="true" />
+        <span>Instagram</span>
+      </NuxtLink>
+      <NuxtLink
+        class="home-page__link"
+        to="https://www.tiktok.com/@autora_dashacave"
+        target="_blank"
+      >
+        <Icon name="simple-icons:tiktok" class="home-page__link-icon" aria-hidden="true" />
+        <span>TikTok</span>
+      </NuxtLink>
+      <NuxtLink
+        disabled
+        class="home-page__link"
+        to="https://dashacave.com.br/blog/"
+        target="_blank"
+      >
+        <Icon name="lucide:book-open-text" class="home-page__link-icon" aria-hidden="true" />
+        <span>Blog</span>
+      </NuxtLink>
+    </nav>
 
     <EuFuiUmaBoaGarotaBook />
 
@@ -84,38 +172,6 @@
       />
     </NuxtLink>
 
-    <nav class="home-page__navigation" aria-label="Links da Dasha Cave">
-      <NuxtLink
-        class="home-page__link"
-        to="https://www.amazon.com.br/stores/Dasha-Cave/author/B0G86SCW8B?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=vitrine_autora"
-        target="_blank"
-      >
-        Amazon
-      </NuxtLink>
-      <NuxtLink
-        class="home-page__link"
-        to="https://www.instagram.com/autora_dashacave/"
-        target="_blank"
-      >
-        Instagram
-      </NuxtLink>
-      <NuxtLink
-        class="home-page__link"
-        to="https://www.tiktok.com/@autora_dashacave"
-        target="_blank"
-      >
-        TikTok
-      </NuxtLink>
-      <NuxtLink
-        disabled
-        class="home-page__link"
-        to="https://dashacave.com.br/blog/"
-        target="_blank"
-      >
-        Blog
-      </NuxtLink>
-
-    </nav>
   </main>
 </template>
 
@@ -133,8 +189,8 @@
 
 .home-page__title {
   margin: 0 0 1.5rem;
+  font-family: var(--font-display);
   font-size: clamp(2rem, 6vw, 3rem);
-  /* font-family: var(--font-display); */
   text-shadow: 0 2px 4px rgb(0 0 0 / 60%);
 }
 
@@ -193,6 +249,72 @@
 .home-page__portrait-bubble--right-bottom {
   right: 8%;
   bottom: -2%;
+}
+
+.home-page__bio {
+  width: min(100%, 520px);
+  margin: 1.25rem auto 0.5rem;
+  font-family: "Courier Prime", monospace;
+  text-align: left;
+}
+
+.home-page__bio-text {
+  margin: 0;
+  color: rgb(255 255 255 / 92%);
+  font-size: 0.975rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.home-page__bio-details {
+  margin-top: 0.5rem;
+  color: rgb(255 255 255 / 92%);
+  font-size: 0.975rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.home-page__bio-details p {
+  margin: 0;
+}
+
+.home-page__bio-details p + p {
+  margin-top: 0.5rem;
+}
+
+.home-page__bio-toggle {
+  min-width: 44px;
+  min-height: 44px;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: #00ffaa;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-page__bio-toggle--inline {
+  display: inline;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.home-page__bio-toggle:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
+.home-page__bio-toggle:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid #fff;
+  outline-offset: 3px;
 }
 
 .home-page__image-link,
@@ -413,8 +535,34 @@
 }
 
 .home-page__navigation {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
   width: min(100%, 320px);
-  margin-top: 0.75rem;
+  margin: 0 auto;
+}
+
+.home-page__navigation .home-page__link {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  gap: 0.1rem;
+  padding: 0.35rem 0.1rem;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  line-height: 1.15;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.home-page__link-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 1rem;
+  line-height: 1;
 }
 
 @keyframes blood-drip {

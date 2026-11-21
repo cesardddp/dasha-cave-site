@@ -170,7 +170,7 @@ function handleDialogKeydown(event: KeyboardEvent) {
   box-sizing: border-box;
   display: block;
   width: min(100%, 320px);
-  margin: 1.5rem auto 0.5rem;
+  margin: 0.5rem auto 0.5rem;
   padding: 0.5rem;
   overflow: hidden;
   border: 1px solid rgb(196 59 72 / 75%);

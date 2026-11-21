@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
-  modules: ['@nuxt/fonts', '@nuxt/image'],
+  modules: ['@nuxt/fonts', '@nuxt/image', '@nuxt/icon'],
   nitro: {
     compressPublicAssets: { gzip: true },
   },

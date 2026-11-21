@@ -108,13 +108,24 @@ useSeoMeta({
       </NuxtLink>
     </nav>
 
-    <EuFuiUmaBoaGarotaBook />
+    <NuxtLink
+      class="home-page__image-link home-page__image-link--eu-fui"
+      to="/livros/eu-fui-uma-boa-garota"
+      aria-label="Conheça Eu Fui uma Boa Garota?"
+    >
+      <NuxtImg
+        src="/imagens/eu-fui-uma-boa-garota/banner.webp"
+        alt="Capa de Eu Fui uma Boa Garota?"
+        :placeholder="[300, 404]"
+        width="300"
+        height="404"
+      />
+    </NuxtLink>
 
     <NuxtLink
       class="home-page__image-link home-page__image-link--trick-me"
-      to="https://www.amazon.com.br/dp/B0HLK3XK71/?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_trick_me"
+      to="/livros/trick-me"
       aria-label="Conheça Trick Me: Spin-off de Ange na Amazon"
-      target="_blank"
     >
       <NuxtImg
         src="/imagens/titulo_capa_trick_me.webp"
@@ -127,9 +138,8 @@ useSeoMeta({
 
     <NuxtLink
       class="home-page__image-link home-page__image-la-calamita"
-      to="https://www.amazon.com.br/dp/B0HF65B8JV?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_la_calamita"
+      to="/livros/la-calamita"
       aria-label="Conheça La Calamità na Amazon"
-      target="_blank"
     >
       <NuxtImg
         src="/imagens/titulo_capa_la_calamita.webp"
@@ -145,9 +155,8 @@ useSeoMeta({
 
     <NuxtLink
       class="home-page__image-link home-page__image-afrodite-ri"
-      to="https://www.amazon.com.br/dp/B0GZLPN6L9?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_afrodite"
+      to="/livros/afrodite"
       aria-label="Conheça Afrodite na Amazon"
-      target="_blank"
     >
       <NuxtImg
         src="/imagens/titulo_capa_afrodite.webp"
@@ -160,9 +169,8 @@ useSeoMeta({
 
     <NuxtLink
       class="home-page__image-link home-page__image-parque"
-      to="https://www.amazon.com.br/dp/B0GTX2DWJZ"
+      to="/livros/o-parque-dos-pecados"
       aria-label="O Parque dos Pecados: Livro 1 - Série Vittorino na Amazon"
-      target="_blank"
     >
       <NuxtImg
         src="/imagens/titulo_parque_dos_pecados.webp"
@@ -457,6 +465,18 @@ useSeoMeta({
 .home-page__image-parque img {
   position: relative;
   z-index: 1;
+}
+
+.home-page__image-link--eu-fui {
+  border-color: rgb(196 59 72 / 75%);
+  background: linear-gradient(145deg, #4a0710 0%, #150406 100%);
+  box-shadow: 0 4px 15px rgb(0 0 0 / 35%);
+}
+
+.home-page__image-link--eu-fui:hover {
+  border-color: rgb(244 112 124 / 95%);
+  background: linear-gradient(145deg, #750f1c 0%, #240508 100%);
+  box-shadow: 0 0 18px rgb(196 38 55 / 55%);
 }
 
 .home-page__image-link--trick-me {

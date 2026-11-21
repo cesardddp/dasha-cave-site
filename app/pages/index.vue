@@ -2,14 +2,23 @@
   <main class="home-page">
     <h1 class="home-page__title">Dasha Cave</h1>
 
-    <NuxtImg 
-      class="home-page__portrait"
-      src="/imagens/dasha_icon.webp"
-      alt="Logo de Dasha Cave"
-      :placeholder="[300, 300]"
-      width="300"
-      height="300"
-    />
+    <div class="home-page__portrait-wrap">
+      <NuxtImg
+        class="home-page__portrait"
+        src="/imagens/dasha_icon.webp"
+        alt="Logo de Dasha Cave"
+        :placeholder="[300, 300]"
+        width="300"
+        height="300"
+      />
+      <span class="home-page__portrait-bubble home-page__portrait-bubble--left-top" aria-hidden="true">🏳️‍🌈</span>
+      <span class="home-page__portrait-bubble home-page__portrait-bubble--left-middle" aria-hidden="true">🏳️‍⚧️</span>
+      <span class="home-page__portrait-bubble home-page__portrait-bubble--left-bottom" aria-hidden="true">🖤</span>
+      <span class="home-page__portrait-bubble home-page__portrait-bubble--right-top" aria-hidden="true">✍️</span>
+      <span class="home-page__portrait-bubble home-page__portrait-bubble--right-middle" aria-hidden="true">📚</span>
+      <span class="home-page__portrait-bubble home-page__portrait-bubble--right-bottom" aria-hidden="true">🗝️</span>
+    </div>
+    
 
     <EuFuiUmaBoaGarotaBook />
 
@@ -129,13 +138,61 @@
   text-shadow: 0 2px 4px rgb(0 0 0 / 60%);
 }
 
+.home-page__portrait-wrap {
+  position: relative;
+  width: min(60vw, 200px);
+}
+
 .home-page__portrait {
   display: block;
-  width: min(60vw, 200px);
+  width: 100%;
   height: auto;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+.home-page__portrait-bubble {
+  position: absolute;
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+  font-size: 0.84rem;
+}
+
+.home-page__portrait-bubble--left-top {
+  top: 56%;
+  left: -5%;
+}
+
+.home-page__portrait-bubble--left-middle {
+  top: 72%;
+  left: -12%;
+}
+
+.home-page__portrait-bubble--left-bottom {
+  bottom: -2%;
+  left: 8%;
+}
+
+.home-page__portrait-bubble--right-top {
+  top: 56%;
+  right: -5%;
+}
+
+.home-page__portrait-bubble--right-middle {
+  top: 72%;
+  right: -12%;
+}
+
+.home-page__portrait-bubble--right-bottom {
+  right: 8%;
+  bottom: -2%;
 }
 
 .home-page__image-link,

@@ -1,0 +1,41 @@
+import { eq } from 'drizzle-orm'
+import type { H3Event } from 'h3'
+import { users } from '../database/schema'
+
+export type UserRole = 'admin' | 'commenter'
+
+export function roleForUserId(event: H3Event, id: number): UserRole {
+  const adminUserIds = String(useRuntimeConfig(event).adminUserIds ?? '')
+    .split(',')
+    .map(value => Number(value.trim()))
+    .filter(value => Number.isSafeInteger(value) && value > 0)
+
+  return adminUserIds.includes(id) ? 'admin' : 'commenter'
+}
+
+export async function readUserRole(event: H3Event, id: number): Promise<UserRole> {
+  const role = roleForUserId(event, id)
+  const db = await useDatabase()
+  const [account] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1)
+
+  if (!account) {
+    throw createError({ statusCode: 401, statusMessage: 'A conta desta sessão não existe mais' })
+  }
+
+  return role
+}
+
+export async function requireAdminSession(event: H3Event) {
+  const { user } = await requireUserSession(event)
+  const role = await readUserRole(event, user.id)
+
+  if (role !== 'admin') {
+    throw createError({ statusCode: 403, statusMessage: 'Esta ação é permitida apenas para administradores' })
+  }
+
+  return { ...user, role }
+}

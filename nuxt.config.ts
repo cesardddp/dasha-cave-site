@@ -5,6 +5,8 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     databasePath: '.data/blog.sqlite',
+    booksDatabasePath: '.data/books.sqlite',
+    adminUserIds: '',
   },
   modules: ['@nuxt/ui', '@nuxt/fonts', '@nuxt/image', '@nuxt/icon', 'nuxt-auth-utils', 'nitro-graphql/nuxt'],
   nitro: {

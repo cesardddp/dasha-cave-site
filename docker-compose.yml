@@ -6,8 +6,12 @@ services:
     init: true
     ports:
       - "3000:3000"
+    volumes:
+      - books_data:/app/.data
+      - book_uploads:/app/public/uploads
     environment:
       NITRO_PORT: 3000
+      NUXT_ADMIN_USER_IDS: ${NUXT_ADMIN_USER_IDS:-}
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -16,3 +20,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+volumes:
+  books_data:
+  book_uploads:

@@ -1,115 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-
-interface Book {
-  title: string
-  subtitle?: string
-  amazonUrl: string
-  image?: string
-  imageAlt: string
-  themes: string[]
-  synopsis: string[]
-  ageRating?: string
-  details: string[]
-  imageNeeded: boolean
-  accent: string
-}
-
-const books: Record<string, Book> = {
-  'eu-fui-uma-boa-garota': {
-    title: 'Eu Fui uma Boa Garota?',
-    amazonUrl: 'https://www.amazon.com.br/dp/B0HRP7B81F?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_campaign=lancamento_eu_fui_uma_boa_garota',
-    image: '/imagens/capas/eu-fui-uma-boa-garota.jpg',
-    imageAlt: 'Capa de Eu Fui uma Boa Garota?',
-    themes: ['Monster Romance sáfico', 'Natal', 'Age Gap', 'Found Family', 'Grumpy x Sunshine', 'Friends to Lovers', 'Comédia romântica'],
-    synopsis: [
-      'Sora e Mia estão oficialmente encrencadas neste Natal.',
-      'Depois de serem expulsas de Faer, elas recebem uma missão no mundo humano: ajudar Hammer — um idoso em luto — a manter aberta uma confeitaria que construiu com a esposa e entregar as encomendas natalinas mais aguardadas da cidade de Crystal.',
-      'Como se isso não fosse complicado o bastante, elas precisam esconder suas verdadeiras aparências e finalmente enfrentar sentimentos que não conseguem mais manter em segredo.',
-      'Uma novela sáfica curtinha e aconchegante, com feéricas, um romance delicado e pitadas de magia, além de boas doses de provocações.',
-    ],
-    ageRating: 'Romance com temas maduros.',
-    details: ['Novela', 'Português', 'Pré-venda até 15/12/2026'],
-    imageNeeded: false,
-    accent: '#8f2632',
-  },
-  'trick-me': {
-    title: 'Trick Me',
-    subtitle: 'Um spin-off de Ange',
-    amazonUrl: 'https://www.amazon.com.br/dp/B0HLK3XK71/?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_trick_me',
-    image: '/imagens/capas/trick-me.jpg',
-    imageAlt: 'Trick Me: Um Spin-off de Ange',
-    themes: ['Dark Romance sáfico', 'Ficção futurista', 'Monster Romance', 'Erus Program', 'Halloween'],
-    synopsis: [
-      'Trix e sua androide são um casal assumido e muito bem resolvido após a descoberta da obsessão de Sage, da paixão mútua e das artimanhas de Cristopher Valler — o CEO da empresa robótica Brax e pai de Trix.',
-      'Trick Me mergulha ainda mais fundo na dinâmica moralmente cinzenta das personagens em um conto de Halloween que promete roubar o fôlego.',
-      'Este é um conto hot e dark sobre o casal sáfico mais insano de 2110.',
-    ],
-    ageRating: 'Conto hot e dark para maiores de 18 anos. Leia a lista de gatilhos.',
-    details: ['84 páginas', 'Português', '28/10/2026', 'Erus Program'],
-    imageNeeded: false,
-    accent: '#9f202d',
-  },
-  'la-calamita': {
-    title: 'La Calamità',
-    amazonUrl: 'https://www.amazon.com.br/dp/B0HF65B8JV?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_la_calamita',
-    subtitle: 'Um horror romântico sáfico — Pílulas do Apocalipse',
-    image: '/imagens/capas/la-calamita.jpg',
-    imageAlt: 'La Calamità',
-    themes: ['Horror romântico sáfico', 'Suspense', 'Ficção científica intimista', 'Lovecraftiano', 'Pílulas do Apocalipse'],
-    synopsis: [
-      'Na pequena cidade de Caldeia, um surto viral aparentemente comum começa a se espalhar entre os pacientes do hospital local.',
-      'Alex, uma enfermeira em meio ao colapso da rotina hospitalar, percebe padrões que ninguém mais está disposto ou é capaz de enxergar. Marcada pelo preconceito velado de Caldeia, pela loucura como maldição familiar e pelo fantasma de um passado como lutadora profissional, ela começa uma investigação perigosa.',
-      'No centro do caos está Eva, cuja presença se torna pouco a pouco um ponto de atração impossível de ignorar. Uma relação movida por desejo, entrega e intensidade.',
-      'La Calamità representa o pecado da Inveja na série Pílulas do Apocalipse.',
-    ],
-    ageRating: 'Recomendado para maiores de 18 anos. Leia a lista de gatilhos.',
-    details: ['290 páginas', 'Português', '20/09/2026', 'Pílulas do Apocalipse — 2º livro'],
-    imageNeeded: false,
-    accent: '#1a8173',
-  },
-  afrodite: {
-    title: 'Afrodite Ri',
-    subtitle: 'Uma lírica canibalesca — Pílulas do Apocalipse',
-    amazonUrl: 'https://www.amazon.com.br/dp/B0GZLPN6L9?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_afrodite',
-    image: '/imagens/capas/afrodite-ri.jpg',
-    imageAlt: 'Afrodite Ri',
-    themes: ['Romance sáfico', 'Monster Romance', 'Conto', 'Dark Romance', 'Grumpy x Sunshine', 'Fast Burn', 'Pílulas do Apocalipse'],
-    synopsis: [
-      'Sophia é uma bruxa iniciante que nunca buscou poder, apenas respostas.',
-      'Ao encontrar um livro antigo esquecido em um antiquário, ela decide arriscar uma evocação proibida, guiada pela promessa de conhecimento.',
-      'A entidade que atende ao seu chamado não veio para ensinar. Ela veio para propor algo muito mais intenso.',
-      'Afrodite Ri representa o pecado da Gula na série Pílulas do Apocalipse.',
-    ],
-    ageRating: 'Conto para maiores de 18 anos. Leia a lista de gatilhos.',
-    details: ['44 páginas', 'Português', '10/06/2026', 'Pílulas do Apocalipse — 1º livro'],
-    imageNeeded: false,
-    accent: '#a52a36',
-  },
-  'o-parque-dos-pecados': {
-    title: 'O Parque dos Pecados',
-    subtitle: 'Livro 1 — Série Vittorino',
-    amazonUrl: 'https://www.amazon.com.br/dp/B0GTX2DWJZ?utm_source=dashacave.com.br&utm_medium=link_divulgacao&utm_content=listagem_parque_dos_pecados',
-    image: '/imagens/capas/o-parque-dos-pecados.jpg',
-    imageAlt: 'O Parque dos Pecados',
-    themes: ['Monster Romance', 'Crítica social', 'Cidade pequena', 'Legado familiar', 'Dark Romance', 'Predestinados', 'Proximidade forçada', 'Hot'],
-    synopsis: [
-      'Bem-vindos ao Parque dos Pecados. Onde o terror é real e o monstro é quem você mais deseja.',
-      'Luna Vittorino herdou mais do que um parque de diversões em decadência; ela herdou um legado de sangue e segredos que a cidade de Tersal prefere manter enterrados.',
-      'Para salvar o patrimônio da família da falência e das garras da elite local, Luna precisa transformar uma antiga estufa vitoriana em uma atração de horror tão realista que os gritos sejam ouvidos em toda a região.',
-      'Quando três estranhos enigmáticos aparecem, Luna sente que algo mudou. Especialmente com Nox, uma figura magnética que parece conhecer os segredos dos Vittorino melhor do que a própria Luna.',
-      'À medida que o Jardim dos Horrores ganha vida, a linha entre encenação e realidade desaparece.',
-    ],
-    ageRating: 'Livro para maiores de 18 anos.',
-    details: ['243 páginas', 'Português', '10/04/2026', 'Série Vittorino — livro 1'],
-    imageNeeded: false,
-    accent: '#b44b87',
-  },
-}
+import type { Book } from '#shared/types/book'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const book = computed(() => books[slug.value])
+const { data: book, error } = await useFetch<Book>(
+  () => `/api/books/${encodeURIComponent(slug.value)}`,
+  { key: () => `book-${slug.value}` },
+)
+
+if (error.value && error.value.statusCode !== 404)
+  throw error.value
+
+if (import.meta.server && (error.value || !book.value))
+  setResponseStatus(404)
 
 useSeoMeta({
   title: () => book.value ? `${book.value.title} | Dasha Cave` : 'Livro não encontrado | Dasha Cave',
@@ -140,8 +44,16 @@ function handlePageClick(event: MouseEvent) {
 
     <article class="book-page__card">
       <div class="book-page__art">
+        <img
+          v-if="book.image?.startsWith('/api/books/images/')"
+          class="book-page__art-image"
+          :src="book.image"
+          :alt="book.imageAlt"
+          width="400"
+          height="540"
+        >
         <NuxtImg
-          v-if="book.image"
+          v-else-if="book.image"
           class="book-page__art-image"
           :src="book.image"
           :alt="book.imageAlt"
@@ -149,6 +61,9 @@ function handlePageClick(event: MouseEvent) {
           width="400"
           height="540"
         />
+        <div v-else class="book-page__image-placeholder">
+          Capa a adicionar
+        </div>
       </div>
 
       <section class="book-page__content" aria-labelledby="book-title">
@@ -241,6 +156,17 @@ function handlePageClick(event: MouseEvent) {
   border-radius: 1rem;
   box-shadow: 0 18px 40px rgb(0 0 0 / 60%);
   object-fit: contain;
+}
+
+.book-page__image-placeholder {
+  display: grid;
+  width: min(100%, 390px);
+  min-height: 20rem;
+  place-items: center;
+  border: 1px dashed rgb(255 255 255 / 55%);
+  border-radius: 1rem;
+  color: rgb(255 255 255 / 75%);
+  font-weight: 700;
 }
 
 .book-page__content {

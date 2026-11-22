@@ -27,6 +27,8 @@ ENV NODE_ENV=production \
 # O output do Nitro é autocontido: não é preciso reinstalar dependências
 COPY --from=build --chown=bun:bun /app/.output ./.output
 
+RUN mkdir -p /app/.data /app/public/uploads && chown -R bun:bun /app/.data /app/public/uploads
+
 USER bun
 EXPOSE 3000
 

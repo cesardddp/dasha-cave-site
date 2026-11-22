@@ -13,7 +13,12 @@ useSeoMeta({
   description: 'Escritora de ficção sombria e romance, com foco em narrativas que transitam entre o horror e o belo 🏳️‍⚧️🏳️‍🌈',
   ogTitle: 'Dasha Cave',
   ogDescription: 'Ficção sombria e romances queer entre o horror e o belo.',
+  ogImage: 'https://dashacave.com.br/imagens/dasha_icon.webp',
+  ogImageAlt: 'Avatar ilustrado de Dasha Cave',
   ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterImage: 'https://dashacave.com.br/imagens/dasha_icon.webp',
+  twitterImageAlt: 'Avatar ilustrado de Dasha Cave',
 })
 </script>
 

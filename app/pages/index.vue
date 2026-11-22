@@ -9,8 +9,8 @@ if (booksError.value)
   throw booksError.value
 
 useSeoMeta({
-  title: 'Dasha Cave | Ficção sombria, romance queer e suspense🗝️',
-  description: 'Conheça Dasha Cave, escritora de ficção sombria e romance queer. Livros com horror, paixão, suspense e amores fora do convencional🏳️‍⚧️🏳️‍🌈.',
+  title: 'Dasha Cave | Escritore de mundos sombrios e romances.🗝️',
+  description: 'Escritora de ficção sombria e romance, com foco em narrativas que transitam entre o horror e o belo 🏳️‍⚧️🏳️‍🌈',
   ogTitle: 'Dasha Cave',
   ogDescription: 'Ficção sombria e romances queer entre o horror e o belo.',
   ogType: 'website',

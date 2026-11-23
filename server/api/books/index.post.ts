@@ -1,10 +1,8 @@
 import { createBook, findBook } from '../../utils/books-db'
 import { normalizeBookInput } from '../../utils/book-input'
-import { rejectDatabaseWrite } from '../../utils/database-write-lock'
 import { requireAdminSession } from '../../utils/user-roles'
 
 export default defineEventHandler(async (event) => {
-  rejectDatabaseWrite()
   await requireAdminSession(event)
   const book = normalizeBookInput(await readBody(event))
 

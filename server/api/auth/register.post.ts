@@ -1,3 +1,3 @@
-import { rejectAuthentication } from '../../utils/database-write-lock'
+import { rejectRegistration } from '../../utils/database-write-lock'
 
-export default defineEventHandler(() => rejectAuthentication())
+export default defineEventHandler(() => rejectRegistration())

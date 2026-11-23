@@ -1,7 +1,40 @@
 <script setup lang="ts">
+import { reactive, shallowRef } from 'vue'
+
 const { loggedIn, user, fetch: refreshSession } = useUserSession()
+const route = useRoute()
+const pending = shallowRef(false)
+const error = shallowRef('')
+const form = reactive({ email: '', password: '' })
 
 useSeoMeta({ title: 'Entrar — Dasha Cave' })
+
+async function submit() {
+  pending.value = true
+  error.value = ''
+
+  try {
+    await $fetch('/api/auth/login', {
+      method: 'POST',
+      body: form,
+    })
+    await refreshSession()
+
+    const destination = route.query.redirect === '/livros/admin' ? '/livros/admin' : '/blog'
+    await navigateTo(destination)
+  }
+  catch (cause) {
+    error.value = cause && typeof cause === 'object' && 'statusMessage' in cause
+      && typeof cause.statusMessage === 'string'
+      ? cause.statusMessage
+      : cause instanceof Error
+        ? cause.message
+        : 'Não foi possível entrar.'
+  }
+  finally {
+    pending.value = false
+  }
+}
 
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
@@ -35,9 +68,33 @@ async function logout() {
         <h1 class="auth-page__title">
           Entrar
         </h1>
-        <p class="auth-page__hint" role="status">
-          Entradas e criação de contas estão temporariamente desativadas.
-        </p>
+        <form class="auth-page__form" @submit.prevent="submit">
+          <UInput
+            v-model="form.email"
+            type="email"
+            placeholder="E-mail"
+            autocomplete="email"
+            required
+            size="lg"
+          />
+          <UInput
+            v-model="form.password"
+            type="password"
+            placeholder="Senha"
+            autocomplete="current-password"
+            required
+            size="lg"
+          />
+          <p v-if="error" class="auth-page__error" role="alert">
+            {{ error }}
+          </p>
+          <UButton type="submit" block size="lg" :loading="pending">
+            Entrar
+          </UButton>
+          <p class="auth-page__hint" role="status">
+            A criação de contas continua desativada.
+          </p>
+        </form>
       </template>
     </div>
   </main>
@@ -82,5 +139,17 @@ async function logout() {
   margin: 0 0 1.25rem;
   color: rgb(255 255 255 / 70%);
   text-align: center;
+}
+
+.auth-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-page__error {
+  margin: 0;
+  color: #ff7b7b;
+  font-size: 0.875rem;
 }
 </style>

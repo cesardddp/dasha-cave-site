@@ -5,9 +5,9 @@ export function rejectDatabaseWrite() {
   })
 }
 
-export function rejectAuthentication() {
+export function rejectRegistration() {
   throw createError({
     statusCode: 503,
-    statusMessage: 'Entradas e criação de contas estão temporariamente desativadas.',
+    statusMessage: 'A criação de contas está temporariamente desativada.',
   })
 }

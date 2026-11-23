@@ -35,7 +35,10 @@ function handlePageClick(event: MouseEvent) {
   <main
     v-if="book"
     class="book-page"
-    :style="{ '--book-accent': book.accent }"
+    :style="{
+      '--book-accent': book.accent,
+      '--book-secondary-accent': book.secondaryAccent,
+    }"
     @click="handlePageClick"
   >
     <NuxtLink class="book-page__back" to="/">
@@ -105,6 +108,7 @@ function handlePageClick(event: MouseEvent) {
   padding: 2rem 1rem 4rem;
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--book-accent) 40%, transparent), transparent 28rem),
+    radial-gradient(circle at bottom left, color-mix(in srgb, var(--book-secondary-accent) 28%, transparent), transparent 24rem),
     linear-gradient(165deg, #111417 0%, #060809 100%);
 }
 
@@ -144,7 +148,11 @@ function handlePageClick(event: MouseEvent) {
   padding: 2rem;
   background:
     linear-gradient(180deg, rgb(0 0 0 / 10%), rgb(0 0 0 / 65%)),
-    linear-gradient(145deg, color-mix(in srgb, var(--book-accent) 75%, #080808), #090909);
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--book-accent) 75%, #080808),
+      color-mix(in srgb, var(--book-secondary-accent) 75%, #080808)
+    );
 }
 
 .book-page__art-image {
@@ -258,7 +266,7 @@ function handlePageClick(event: MouseEvent) {
   padding: 0.75rem 1.25rem;
   border: 1px solid #fff;
   border-radius: 999px;
-  background: var(--book-accent);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
   color: #fff;
   font-weight: 800;
   text-decoration: none;

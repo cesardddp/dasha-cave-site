@@ -32,6 +32,7 @@ function emptyBook(): Book {
     ageRating: '',
     details: [],
     accent: '#1a8173',
+    secondaryAccent: '#00626f',
   }
 }
 
@@ -271,8 +272,9 @@ async function deleteBook() {
         class="book-editor__login-action"
         :to="{ path: '/login', query: { redirect: '/livros/admin' } }"
       >
-        Entrar ou criar conta
+        Entrar
       </NuxtLink>
+      <p>A criação de contas está desativada.</p>
       <p v-if="errorMessage" class="book-editor__message book-editor__message--error" role="alert">
         {{ errorMessage }}
       </p>
@@ -317,10 +319,10 @@ async function deleteBook() {
               required
             >
             <button type="submit" :disabled="loading">
-              {{ loading ? 'Importando…' : 'Buscar dados e capa' }}
+              {{ loading ? 'Importando…' : 'Buscar dados, capa e cores' }}
             </button>
           </div>
-          <p>Os dados carregados ficam como rascunho até você revisar e salvar.</p>
+          <p>Os dados e as cores sugeridas ficam como rascunho até você revisar e salvar.</p>
         </form>
       </section>
 
@@ -428,14 +430,19 @@ async function deleteBook() {
             <textarea v-model="synopsisText" rows="8" />
           </label>
 
+          <label>
+            Aviso etário e de conteúdo
+            <input v-model="draft.ageRating" maxlength="240">
+          </label>
+
           <div class="book-editor__field-grid">
-            <label>
-              Aviso etário e de conteúdo
-              <input v-model="draft.ageRating" maxlength="240">
-            </label>
             <label>
               Cor de destaque
               <input v-model="draft.accent" type="color">
+            </label>
+            <label>
+              Cor secundária
+              <input v-model="draft.secondaryAccent" type="color">
             </label>
           </div>
 

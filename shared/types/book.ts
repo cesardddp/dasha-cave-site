@@ -10,4 +10,5 @@ export interface Book {
   ageRating: string
   details: string[]
   accent: string
+  secondaryAccent: string
 }

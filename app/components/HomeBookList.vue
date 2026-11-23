@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Book } from '#shared/types/book'
 
-defineProps<{ books: Book[] }>()
+const props = defineProps<{ books: Book[] }>()
 
 const imageCardClasses: Record<string, string> = {
   'eu-fui-uma-boa-garota': 'home-page__image-link--eu-fui',
@@ -13,6 +13,17 @@ const imageCardClasses: Record<string, string> = {
 
 function imageCardClass(slug: string) {
   return imageCardClasses[slug] ?? ''
+}
+
+function bookColorStyle(book?: Book) {
+  return {
+    '--book-accent': book?.accent ?? '#1a8173',
+    '--book-secondary-accent': book?.secondaryAccent ?? '#00626f',
+  }
+}
+
+function mobileBookColorStyle(slug: string) {
+  return bookColorStyle(props.books.find(book => book.slug === slug))
 }
 
 function bookAriaLabel(book: Book) {
@@ -29,6 +40,7 @@ function bookAriaLabel(book: Book) {
         class="home-page__image-link home-page__image-link--eu-fui"
         to="/livros/eu-fui-uma-boa-garota"
         aria-label="Conheça Eu Fui uma Boa Garota?, em pré-venda e lançamento"
+        :style="mobileBookColorStyle('eu-fui-uma-boa-garota')"
       >
         <NuxtImg src="/imagens/eu-fui-uma-boa-garota/banner.webp" alt="Capa de Eu Fui uma Boa Garota?" :placeholder="[300, 404]" width="300" height="404" />
         <span class="home-page__launch-badge" aria-hidden="true">
@@ -40,6 +52,7 @@ function bookAriaLabel(book: Book) {
         class="home-page__image-link home-page__image-link--trick-me"
         to="/livros/trick-me"
         aria-label="Conheça Trick Me: Spin-off de Ange"
+        :style="mobileBookColorStyle('trick-me')"
       >
         <NuxtImg src="/imagens/titulo_capa_trick_me.webp" alt="Trick Me: Um Spin-off de Ange" :placeholder="[300, 169]" width="300" height="169" />
       </NuxtLink>
@@ -47,6 +60,7 @@ function bookAriaLabel(book: Book) {
         class="home-page__image-link home-page__image-la-calamita"
         to="/livros/la-calamita"
         aria-label="Conheça La Calamità"
+        :style="mobileBookColorStyle('la-calamita')"
       >
         <NuxtImg src="/imagens/titulo_capa_la_calamita.webp" alt="La Calamità" :placeholder="[300, 178]" width="300" height="178" />
         <span class="home-page__blood" aria-hidden="true">
@@ -57,6 +71,7 @@ function bookAriaLabel(book: Book) {
         class="home-page__image-link home-page__image-afrodite-ri"
         to="/livros/afrodite"
         aria-label="Conheça Afrodite Ri"
+        :style="mobileBookColorStyle('afrodite')"
       >
         <NuxtImg src="/imagens/titulo_capa_afrodite.webp" alt="Afrodite Ri" :placeholder="[300, 86]" width="300" height="86" />
       </NuxtLink>
@@ -64,6 +79,7 @@ function bookAriaLabel(book: Book) {
         class="home-page__image-link home-page__image-parque"
         to="/livros/o-parque-dos-pecados"
         aria-label="Conheça O Parque dos Pecados"
+        :style="mobileBookColorStyle('o-parque-dos-pecados')"
       >
         <NuxtImg src="/imagens/titulo_parque_dos_pecados.webp" alt="O Parque dos Pecados" width="1451" height="749" />
       </NuxtLink>
@@ -77,6 +93,7 @@ function bookAriaLabel(book: Book) {
         :class="imageCardClass(book.slug)"
         :to="`/livros/${book.slug}`"
         :aria-label="bookAriaLabel(book)"
+        :style="bookColorStyle(book)"
       >
         <img
           v-if="book.image?.startsWith('/api/books/images/')"
@@ -140,7 +157,11 @@ function bookAriaLabel(book: Book) {
   position: relative;
   overflow: hidden;
   padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #005d50 0%, #00626f 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--book-accent) 76%, #080808),
+    color-mix(in srgb, var(--book-secondary-accent) 76%, #080808)
+  );
 }
 
 .home-page__books {
@@ -278,9 +299,9 @@ function bookAriaLabel(book: Book) {
 
 .home-page__image-afrodite-ri {
   isolation: isolate;
-  border-color: rgb(177 47 57 / 70%);
-  background: linear-gradient(135deg, #190306 0%, #5e0b12 55%, #260307 100%);
-  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
+  border-color: color-mix(in srgb, var(--book-accent) 70%, transparent);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px color-mix(in srgb, var(--book-accent) 30%, transparent);
 }
 
 .home-page__image-afrodite-ri::before {
@@ -303,9 +324,9 @@ function bookAriaLabel(book: Book) {
 
 .home-page__image-parque {
   isolation: isolate;
-  border-color: rgb(228 79 158 / 70%);
-  background: linear-gradient(135deg, #190619 0%, #57144b 55%, #260a2c 100%);
-  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 95 / 30%);
+  border-color: color-mix(in srgb, var(--book-accent) 70%, transparent);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px color-mix(in srgb, var(--book-accent) 30%, transparent);
 }
 
 .home-page__image-parque::before {
@@ -327,22 +348,26 @@ function bookAriaLabel(book: Book) {
 }
 
 .home-page__image-link--eu-fui {
-  border-color: rgb(196 59 72 / 75%);
-  background: linear-gradient(145deg, #4a0710 0%, #150406 100%);
+  border-color: color-mix(in srgb, var(--book-accent) 75%, transparent);
+  background: linear-gradient(145deg, var(--book-accent), var(--book-secondary-accent));
   box-shadow: 0 4px 15px rgb(0 0 0 / 35%);
 }
 
 .home-page__image-link--eu-fui:hover {
-  border-color: rgb(244 112 124 / 95%);
-  background: linear-gradient(145deg, #750f1c 0%, #240508 100%);
-  box-shadow: 0 0 18px rgb(196 38 55 / 55%);
+  border-color: color-mix(in srgb, var(--book-accent) 75%, #fff);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--book-accent) 75%, #fff),
+    color-mix(in srgb, var(--book-secondary-accent) 80%, #080808)
+  );
+  box-shadow: 0 0 18px color-mix(in srgb, var(--book-accent) 55%, transparent);
 }
 
 .home-page__image-link--trick-me {
   isolation: isolate;
-  border-color: rgb(177 47 57 / 70%);
-  background: linear-gradient(135deg, #190306 0%, #5e0b12 55%, #260307 100%);
-  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px rgb(116 12 22 / 30%);
+  border-color: color-mix(in srgb, var(--book-accent) 70%, transparent);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 4px 15px rgb(0 0 0 / 55%), 0 0 12px color-mix(in srgb, var(--book-accent) 30%, transparent);
 }
 
 .home-page__image-link--trick-me::before {
@@ -368,27 +393,27 @@ function bookAriaLabel(book: Book) {
 }
 
 .home-page__image-la-calamita:hover {
-  border-color: rgb(126 255 238 / 90%);
-  background: linear-gradient(135deg, #008f7d 0%, #00a0b5 100%);
-  box-shadow: 0 0 15px rgb(0 210 190 / 45%);
+  border-color: color-mix(in srgb, var(--book-accent) 75%, #fff);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 0 15px color-mix(in srgb, var(--book-accent) 45%, transparent);
 }
 
 .home-page__image-afrodite-ri:hover {
-  border-color: rgb(239 101 111 / 90%);
-  background: linear-gradient(135deg, #3b070d 0%, #8f151f 55%, #4a080f 100%);
-  box-shadow: 0 0 18px rgb(177 36 48 / 55%);
+  border-color: color-mix(in srgb, var(--book-accent) 75%, #fff);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--book-accent) 55%, transparent);
 }
 
 .home-page__image-parque:hover {
-  border-color: rgb(247 151 211 / 90%);
-  background: linear-gradient(135deg, #3c0c36 0%, #8b226e 55%, #4a144e 100%);
-  box-shadow: 0 0 18px rgb(177 36 148 / 55%);
+  border-color: color-mix(in srgb, var(--book-accent) 75%, #fff);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--book-accent) 55%, transparent);
 }
 
 .home-page__image-link--trick-me:hover {
-  border-color: rgb(239 101 111 / 90%);
-  background: linear-gradient(135deg, #3b070d 0%, #8f151f 55%, #4a080f 100%);
-  box-shadow: 0 0 18px rgb(177 36 48 / 55%);
+  border-color: color-mix(in srgb, var(--book-accent) 75%, #fff);
+  background: linear-gradient(135deg, var(--book-accent), var(--book-secondary-accent));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--book-accent) 55%, transparent);
 }
 
 .home-page__image-link:focus-visible {

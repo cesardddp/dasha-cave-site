@@ -17,6 +17,7 @@ interface BookRow {
   age_rating: string
   details: string
   accent: string
+  secondary_accent: string
 }
 
 let connection: DatabaseSync | undefined
@@ -34,6 +35,7 @@ function decodeBook(row: BookRow): Book {
     ageRating: row.age_rating,
     details: JSON.parse(row.details) as string[],
     accent: row.accent,
+    secondaryAccent: row.secondary_accent,
   }
 }
 
@@ -46,15 +48,20 @@ function database() {
   const sqlite = new DatabaseSync(file)
   try {
     sqlite.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;')
-    createBooksSchema(sqlite)
+    const migratedSecondaryAccent = createBooksSchema(sqlite)
+
+    if (migratedSecondaryAccent) {
+      const updateAccent = sqlite.prepare('update books set secondary_accent = ? where slug = ?')
+      initialBooks.forEach(book => updateAccent.run(book.secondaryAccent, book.slug))
+    }
 
     const seeded = sqlite.prepare('select value from books_meta where key = ?').get('initial_books_seeded')
     if (!seeded) {
       const insert = sqlite.prepare(`
         insert or ignore into books (
           slug, title, subtitle, amazon_url, image, image_alt,
-          themes, synopsis, age_rating, details, accent, sort_order, updated_at
-        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          themes, synopsis, age_rating, details, accent, secondary_accent, sort_order, updated_at
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
 
       initialBooks.forEach((book, index) => {
@@ -70,6 +77,7 @@ function database() {
           book.ageRating,
           JSON.stringify(book.details),
           book.accent,
+          book.secondaryAccent,
           index,
           new Date().toISOString(),
         )
@@ -91,7 +99,7 @@ function database() {
 
 const selectFields = `
   slug, title, subtitle, amazon_url, image, image_alt,
-  themes, synopsis, age_rating, details, accent
+  themes, synopsis, age_rating, details, accent, secondary_accent
 `
 
 export function listBooks() {
@@ -110,61 +118,79 @@ export function findBook(slug: string) {
   return row ? decodeBook(row) : null
 }
 
-export function createBook(book: Book) {
+function withBookDatabaseWrite<T>(write: (sqlite: DatabaseSync) => T): T {
   const sqlite = database()
-  const sortOrder = Number(
-    sqlite.prepare('select coalesce(max(sort_order), -1) + 1 as next from books').get()?.next ?? 0,
-  )
+  sqlite.exec('PRAGMA query_only = OFF;')
+  try {
+    return write(sqlite)
+  }
+  finally {
+    sqlite.exec('PRAGMA query_only = ON;')
+  }
+}
 
-  sqlite.prepare(`
-    insert into books (
-      slug, title, subtitle, amazon_url, image, image_alt,
-      themes, synopsis, age_rating, details, accent, sort_order, updated_at
-    ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    book.slug,
-    book.title,
-    book.subtitle,
-    book.amazonUrl,
-    book.image,
-    book.imageAlt,
-    JSON.stringify(book.themes),
-    JSON.stringify(book.synopsis),
-    book.ageRating,
-    JSON.stringify(book.details),
-    book.accent,
-    sortOrder,
-    new Date().toISOString(),
-  )
+export function createBook(book: Book) {
+  withBookDatabaseWrite((sqlite) => {
+    const sortOrder = Number(
+      sqlite.prepare('select coalesce(max(sort_order), -1) + 1 as next from books').get()?.next ?? 0,
+    )
+
+    sqlite.prepare(`
+      insert into books (
+        slug, title, subtitle, amazon_url, image, image_alt,
+        themes, synopsis, age_rating, details, accent, secondary_accent, sort_order, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      book.slug,
+      book.title,
+      book.subtitle,
+      book.amazonUrl,
+      book.image,
+      book.imageAlt,
+      JSON.stringify(book.themes),
+      JSON.stringify(book.synopsis),
+      book.ageRating,
+      JSON.stringify(book.details),
+      book.accent,
+      book.secondaryAccent,
+      sortOrder,
+      new Date().toISOString(),
+    )
+  })
 
   return findBook(book.slug)
 }
 
 export function updateBook(originalSlug: string, book: Book) {
-  database().prepare(`
-    update books set
-      slug = ?, title = ?, subtitle = ?, amazon_url = ?, image = ?, image_alt = ?,
-      themes = ?, synopsis = ?, age_rating = ?, details = ?, accent = ?, updated_at = ?
-    where slug = ?
-  `).run(
-    book.slug,
-    book.title,
-    book.subtitle,
-    book.amazonUrl,
-    book.image,
-    book.imageAlt,
-    JSON.stringify(book.themes),
-    JSON.stringify(book.synopsis),
-    book.ageRating,
-    JSON.stringify(book.details),
-    book.accent,
-    new Date().toISOString(),
-    originalSlug,
-  )
+  withBookDatabaseWrite((sqlite) => {
+    sqlite.prepare(`
+      update books set
+        slug = ?, title = ?, subtitle = ?, amazon_url = ?, image = ?, image_alt = ?,
+        themes = ?, synopsis = ?, age_rating = ?, details = ?, accent = ?, secondary_accent = ?, updated_at = ?
+      where slug = ?
+    `).run(
+      book.slug,
+      book.title,
+      book.subtitle,
+      book.amazonUrl,
+      book.image,
+      book.imageAlt,
+      JSON.stringify(book.themes),
+      JSON.stringify(book.synopsis),
+      book.ageRating,
+      JSON.stringify(book.details),
+      book.accent,
+      book.secondaryAccent,
+      new Date().toISOString(),
+      originalSlug,
+    )
+  })
 
   return findBook(book.slug)
 }
 
 export function removeBook(slug: string) {
-  return Number(database().prepare('delete from books where slug = ?').run(slug).changes) > 0
+  return withBookDatabaseWrite(sqlite =>
+    Number(sqlite.prepare('delete from books where slug = ?').run(slug).changes) > 0,
+  )
 }

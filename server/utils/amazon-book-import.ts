@@ -2,6 +2,7 @@ import { initialBooks } from '../../shared/data/books'
 import type { Book } from '../../shared/types/book'
 import { normalizeAmazonUrl, slugifyBookTitle } from './book-input'
 import { readLimitedResponse, saveBookImage } from './book-images'
+import { extractImagePalette } from './image-palette'
 
 const maximumAmazonPageSize = 2 * 1024 * 1024
 const maximumAmazonImageSize = 5 * 1024 * 1024
@@ -210,7 +211,7 @@ async function fetchAmazonCover(url: string) {
     })
   }
 
-  return saveBookImage(await readLimitedResponse(response, maximumAmazonImageSize))
+  return readLimitedResponse(response, maximumAmazonImageSize)
 }
 
 export async function importAmazonBook(value: unknown): Promise<AmazonBookImportResult> {
@@ -241,9 +242,12 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
   const imageUrl = extractImageUrl(markdown, title)
   const warnings: string[] = []
   let downloadedImage = ''
+  let accent = initialBooks[0].accent
+  let secondaryAccent = initialBooks[0].secondaryAccent
+  let coverData: Uint8Array | undefined
   if (imageUrl) {
     try {
-      downloadedImage = await fetchAmazonCover(imageUrl)
+      coverData = await fetchAmazonCover(imageUrl)
     }
     catch (cause) {
       const message = cause && typeof cause === 'object' && 'statusMessage' in cause
@@ -254,10 +258,37 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
           : 'Não foi possível baixar a capa. Envie a imagem manualmente.'
       warnings.push(message)
     }
+
+    if (coverData) {
+      try {
+        downloadedImage = await saveBookImage(coverData)
+      }
+      catch (cause) {
+        const message = cause && typeof cause === 'object' && 'statusMessage' in cause
+          && typeof cause.statusMessage === 'string'
+          ? cause.statusMessage
+          : cause instanceof Error
+            ? cause.message
+            : 'Não foi possível salvar a capa. Envie a imagem manualmente.'
+        warnings.push(message)
+      }
+
+      try {
+        const palette = await extractImagePalette(coverData)
+        accent = palette.accent
+        secondaryAccent = palette.secondaryAccent
+      }
+      catch {
+        warnings.push('Não consegui identificar as cores da capa; escolha as cores manualmente antes de salvar.')
+      }
+    }
   }
   else {
     warnings.push('Não encontrei a capa na página. Envie uma imagem manualmente.')
   }
+
+  if (!coverData)
+    warnings.push('Não consegui sugerir cores sem a capa; escolha as cores manualmente antes de salvar.')
 
   const themes = extractThemes(description)
   const synopsis = extractSynopsis(description)
@@ -290,7 +321,8 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
       synopsis,
       ageRating,
       details,
-      accent: initialBooks[0].accent,
+      accent,
+      secondaryAccent,
     },
     warnings,
   }

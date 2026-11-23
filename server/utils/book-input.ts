@@ -89,6 +89,11 @@ export function normalizeBookInput(value: unknown): Book {
     throw createError({ statusCode: 400, statusMessage: 'A cor de destaque deve estar no formato #RRGGBB' })
   }
 
+  const secondaryAccent = stringField(body.secondaryAccent ?? '#00626f', 'secondaryAccent', 7)
+  if (!/^#[\da-f]{6}$/i.test(secondaryAccent)) {
+    throw createError({ statusCode: 400, statusMessage: 'A cor secundária deve estar no formato #RRGGBB' })
+  }
+
   return {
     slug,
     title,
@@ -101,5 +106,6 @@ export function normalizeBookInput(value: unknown): Book {
     ageRating: stringField(body.ageRating ?? '', 'ageRating', 240),
     details: listField(body.details, 'details', 30, 240),
     accent,
+    secondaryAccent,
   }
 }

@@ -18,6 +18,7 @@ export const initialBooks: Book[] = [
     ageRating: 'Romance com temas maduros.',
     details: ['Novela', 'Português', 'Pré-venda até 15/12/2026'],
     accent: '#8f2632',
+    secondaryAccent: '#4a0710',
   },
   {
     slug: 'trick-me',
@@ -35,6 +36,7 @@ export const initialBooks: Book[] = [
     ageRating: 'Leitura indicada apenas para maiores de 18 anos. Leia a lista de gatilhos.',
     details: ['84 páginas', 'Português', '28/10/2026', 'Erus Program'],
     accent: '#9f202d',
+    secondaryAccent: '#260307',
   },
   {
     slug: 'la-calamita',
@@ -53,6 +55,7 @@ export const initialBooks: Book[] = [
     ageRating: 'Recomendado para maiores de 18 anos. Leia a lista de gatilhos.',
     details: ['290 páginas', 'Português', '20/09/2026', 'Pílulas do Apocalipse — 2º livro'],
     accent: '#1a8173',
+    secondaryAccent: '#00626f',
   },
   {
     slug: 'afrodite',
@@ -70,6 +73,7 @@ export const initialBooks: Book[] = [
     ageRating: 'Conto para maiores de 18 anos. Leia a lista de gatilhos.',
     details: ['44 páginas', 'Português', '10/06/2026', 'Pílulas do Apocalipse — 1º livro'],
     accent: '#a52a36',
+    secondaryAccent: '#190306',
   },
   {
     slug: 'o-parque-dos-pecados',
@@ -89,5 +93,6 @@ export const initialBooks: Book[] = [
     ageRating: 'Livro para maiores de 18 anos.',
     details: ['243 páginas', 'Português', '10/04/2026', 'Série Vittorino — livro 1'],
     accent: '#b44b87',
+    secondaryAccent: '#260a2c',
   },
 ]

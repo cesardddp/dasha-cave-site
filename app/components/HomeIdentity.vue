@@ -7,13 +7,17 @@
     </h2>
 
     <div class="home-page__portrait-wrap">
+      <!-- Placeholder (LQIP) removido: o Google Images pode indexar a versão borrada
+           como a imagem principal da busca. Em imagens above-the-fold prefira
+           loading="eager" + fetchpriority="high" em vez de :placeholder. -->
       <NuxtImg
         class="home-page__portrait"
         src="/imagens/dasha_icon.webp"
         alt="Avatar ilustrado de Dasha Cave"
-        :placeholder="[300, 300]"
         width="300"
         height="300"
+        loading="eager"
+        fetchpriority="high"
       />
       <span class="home-page__portrait-bubble home-page__portrait-bubble--left-top" aria-hidden="true">🏳️‍🌈</span>
       <span class="home-page__portrait-bubble home-page__portrait-bubble--left-middle" aria-hidden="true">🏳️‍⚧️</span>

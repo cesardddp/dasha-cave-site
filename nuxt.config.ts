@@ -8,12 +8,8 @@ export default defineNuxtConfig({
     booksDatabasePath: '.data/books.sqlite',
     adminUserIds: '',
   },
-  modules: ['@nuxt/ui', '@nuxt/fonts', '@nuxt/image', '@nuxt/icon', 'nuxt-auth-utils', 'nitro-graphql/nuxt'],
+  modules: ['@nuxt/ui', '@nuxt/fonts', '@nuxt/image', '@nuxt/icon', 'nuxt-auth-utils'],
   nitro: {
-    graphql: {
-      framework: 'graphql-yoga',
-    },
-    modules: ['nitro-graphql'],
     compressPublicAssets: { gzip: true },
   },
 })

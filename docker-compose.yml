@@ -12,6 +12,9 @@ services:
     environment:
       NITRO_PORT: 3000
       NUXT_ADMIN_USER_IDS: ${NUXT_ADMIN_USER_IDS:-}
+      NUXT_APP_SECRET: ${NUXT_APP_SECRET:-}
+      DATABASE_PATH: ${DATABASE_PATH:-/app/.data/blog.sqlite}
+      SEED_PASSWORD: ${SEED_PASSWORD:-}
     security_opt:
       - no-new-privileges:true
     healthcheck:

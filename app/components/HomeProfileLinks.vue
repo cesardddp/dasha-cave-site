@@ -73,7 +73,6 @@ const bioExpanded = shallowRef(false)
         disabled
         class="home-page__link"
         to="/blog/"
-        target="_blank"
       >
         <Icon name="lucide:book-open-text" class="home-page__link-icon" aria-hidden="true" />
         <span>Blog</span>

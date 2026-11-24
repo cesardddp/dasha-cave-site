@@ -24,7 +24,6 @@
     "graphql": "^17.1.0",
     "graphql-yoga": "^6.1.1",
     "marked": "^18.2.1",
-    "nitro-graphql": "^1.8.0",
     "nuxt": "^4.6.4",
     "nuxt-auth-utils": "^0.6.2",
     "sharp": "^0.35.5",

@@ -14,6 +14,8 @@ const isAdmin = computed(() => loggedIn.value && user.value?.role === 'admin')
 const draft = reactive({ title: '', description: '', content: '', badge: '', image: '' })
 const submitting = ref(false)
 const composerError = ref('')
+const editingSlug = ref<string | null>(null)
+const composerRef = ref<HTMLElement | null>(null)
 
 // Imagem do post: upload próprio ou reaproveitamento do bucket, igual ao editor de livros.
 interface PostImageAsset {
@@ -84,36 +86,98 @@ const canSubmit = computed(() =>
   && draft.content.trim().length > 0,
 )
 
+function resetDraft() {
+  Object.assign(draft, { title: '', description: '', content: '', badge: '', image: '' })
+  editingSlug.value = null
+  composerError.value = ''
+}
+
 async function submitPost() {
   if (!canSubmit.value) return
   submitting.value = true
   composerError.value = ''
+
+  const editing = editingSlug.value
+  const body = {
+    title: draft.title.trim(),
+    description: draft.description.trim(),
+    content: draft.content.trim(),
+    badge: draft.badge.trim() || undefined,
+    image: draft.image.trim() || undefined,
+  }
+
   try {
-    await $fetch('/api/posts', {
-      method: 'POST',
-      body: {
-        title: draft.title.trim(),
-        description: draft.description.trim(),
-        content: draft.content.trim(),
-        badge: draft.badge.trim() || undefined,
-        image: draft.image.trim() || undefined,
-      },
-    })
-    Object.assign(draft, { title: '', description: '', content: '', badge: '', image: '' })
+    if (editing) {
+      await $fetch(`/api/posts/${editing}`, { method: 'PUT', body })
+    }
+    else {
+      await $fetch('/api/posts', { method: 'POST', body })
+    }
+    resetDraft()
     await refreshNuxtData('blog-posts')
+    if (editing) await refreshNuxtData(`blog-post-${editing}`)
   }
   catch (error) {
     composerError.value = (error as { statusMessage?: string })?.statusMessage
-      ?? 'Não foi possível publicar o post.'
+      ?? (editing
+        ? 'Não foi possível salvar as alterações.'
+        : 'Não foi possível publicar o post.')
   }
   finally {
     submitting.value = false
   }
 }
 
+function startEditing(post: { slug: string, title: string, description: string, content: string | null, badge: string | null, image: string | null }) {
+  Object.assign(draft, {
+    title: post.title,
+    description: post.description,
+    content: post.content ?? '',
+    badge: post.badge ?? '',
+    image: post.image ?? '',
+  })
+  editingSlug.value = post.slug
+  composerError.value = ''
+  composerRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function startEditingBySlug(slug: string) {
+  const found = posts.value?.find(post => post.slug === slug)
+  if (found) startEditing(found)
+}
+
+async function deletePost(slug: string) {
+  composerError.value = ''
+  try {
+    await $fetch(`/api/posts/${slug}`, { method: 'DELETE' })
+    if (editingSlug.value === slug) resetDraft()
+    await refreshNuxtData('blog-posts')
+    await refreshNuxtData(`blog-post-${slug}`)
+  }
+  catch (error) {
+    composerError.value = (error as { statusMessage?: string })?.statusMessage
+      ?? 'Não foi possível apagar o post.'
+  }
+}
+
+// Permite abrir a página do post e clicar em "Editar": volta para /blog?editar=slug
+// e o compositor já abre preenchido com o post.
+const route = useRoute()
+const router = useRouter()
+
+async function consumeEditQuery() {
+  const target = route.query.editar
+  if (typeof target !== 'string' || !isAdmin.value) return
+
+  startEditingBySlug(target)
+  await router.replace({ query: {} })
+}
+
+onMounted(consumeEditQuery)
+watch(() => route.query.editar, consumeEditQuery)
+
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-
 const render = (content: string | null, fallback: string) =>
   marked.parse(content || fallback, { async: false })
 
@@ -135,8 +199,10 @@ useSeoMeta({
       </p>
     </header>
 
-    <section v-if="isAdmin" class="composer" aria-label="Novo post">
-      <h2 class="composer__title">Novo post</h2>
+    <section v-if="isAdmin" ref="composerRef" class="composer" aria-label="Novo post">
+      <h2 class="composer__title">
+        {{ editingSlug ? 'Editar post' : 'Novo post' }}
+      </h2>
 
       <UInput v-model="draft.title" placeholder="Título" class="composer__field" />
       <UInput v-model="draft.description" placeholder="Descrição curta" class="composer__field" />
@@ -224,9 +290,20 @@ useSeoMeta({
         {{ composerError }}
       </p>
 
-      <UButton :disabled="!canSubmit" :loading="submitting" @click="submitPost">
-        Publicar
-      </UButton>
+      <div class="composer__actions">
+        <UButton :disabled="!canSubmit" :loading="submitting" @click="submitPost">
+          {{ editingSlug ? 'Salvar alterações' : 'Publicar' }}
+        </UButton>
+        <UButton
+          v-if="editingSlug"
+          color="neutral"
+          variant="ghost"
+          :disabled="submitting"
+          @click="resetDraft"
+        >
+          Cancelar edição
+        </UButton>
+      </div>
     </section>
 
     <p v-if="status === 'pending'" class="blog-page__empty">
@@ -258,7 +335,16 @@ useSeoMeta({
               <time class="feed__date" :datetime="post.publishedAt">{{ formatDate(post.publishedAt) }}</time>
             </span>
           </NuxtLink>
-          <span v-if="post.badge" class="feed__badge">{{ post.badge }}</span>
+          <div class="feed__meta-actions">
+            <span v-if="post.badge" class="feed__badge">{{ post.badge }}</span>
+            <BlogPostMenu
+              v-if="isAdmin"
+              :post="post"
+              :editing="editingSlug === post.slug"
+              @edit="startEditingBySlug"
+              @delete="deletePost"
+            />
+          </div>
         </header>
 
         <h2 class="feed__title">
@@ -352,6 +438,13 @@ useSeoMeta({
 .composer__error {
   color: #ff6b6b;
   font-size: 0.85rem;
+}
+
+.composer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .composer__image {
@@ -529,6 +622,13 @@ useSeoMeta({
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.feed__meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .feed__title {

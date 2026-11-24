@@ -10,6 +10,11 @@ if (error.value || !post.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post não encontrado', fatal: true })
 }
 
+const { loggedIn, user } = useUserSession()
+const isAdmin = computed(() => loggedIn.value && user.value?.role === 'admin')
+const deleting = ref(false)
+const actionError = ref('')
+
 const html = computed(() => marked.parse(post.value?.content ?? '', { async: false }))
 
 const authors = computed(() => [
@@ -20,6 +25,27 @@ const authors = computed(() => [
   },
 ])
 
+async function editPost() {
+  await navigateTo({ path: '/blog', query: { editar: slug } })
+}
+
+async function deletePost() {
+  if (deleting.value) return
+  deleting.value = true
+  actionError.value = ''
+  try {
+    await $fetch(`/api/posts/${slug}`, { method: 'DELETE' })
+    await navigateTo('/blog')
+  }
+  catch (err) {
+    actionError.value = (err as { statusMessage?: string })?.statusMessage
+      ?? 'Não foi possível apagar o post.'
+  }
+  finally {
+    deleting.value = false
+  }
+}
+
 useSeoMeta({
   title: () => `${post.value?.title ?? 'Blog'} — Dasha Cave`,
   description: () => post.value?.description ?? '',
@@ -28,9 +54,22 @@ useSeoMeta({
 
 <template>
   <main v-if="post" class="post-page">
-    <NuxtLink class="post-page__back" to="/blog">
-      ← Todos os posts
-    </NuxtLink>
+    <div class="post-page__toolbar">
+      <NuxtLink class="post-page__back" to="/blog">
+        ← Todos os posts
+      </NuxtLink>
+
+      <BlogPostMenu
+        v-if="isAdmin"
+        :post="post"
+        @edit="editPost"
+        @delete="deletePost"
+      />
+    </div>
+
+    <p v-if="actionError" class="post-page__error" role="alert">
+      {{ actionError }}
+    </p>
 
     <UBlogPost
       :title="post.title"
@@ -57,9 +96,16 @@ useSeoMeta({
   color: #fff;
 }
 
+.post-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
 .post-page__back {
   display: inline-block;
-  margin-bottom: 1.25rem;
   color: #00ffaa;
   font-size: 0.9rem;
   text-decoration: none;
@@ -67,6 +113,12 @@ useSeoMeta({
 
 .post-page__back:hover {
   text-decoration: underline;
+}
+
+.post-page__error {
+  margin: 0 0 1rem;
+  color: #ff6b6b;
+  font-size: 0.9rem;
 }
 
 .post-page__content {

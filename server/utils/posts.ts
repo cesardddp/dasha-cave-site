@@ -1,11 +1,14 @@
 import { desc, eq } from 'drizzle-orm'
 import { posts, users } from '../database/schema'
+import type { PostInput } from './post-input'
+
+type Database = Awaited<ReturnType<typeof useDatabase>>
 
 /**
  * Helper compartilhado entre os handlers REST e os resolvers GraphQL:
  * seleciona os campos de post + autor em uma única query com join.
  */
-export async function selectPosts(db: Awaited<ReturnType<typeof useDatabase>>, slug?: string) {
+export async function selectPosts(db: Database, slug?: string) {
   const query = db
     .select({
       id: posts.id,
@@ -39,4 +42,30 @@ export async function selectPosts(db: Awaited<ReturnType<typeof useDatabase>>, s
     publishedAt: row.publishedAt,
     author: { name: row.authorName, avatar: row.authorAvatar, bio: row.authorBio },
   }))
+}
+
+/**
+ * Atualiza um post existente. O slug é preservado: editar o texto (mesmo o
+ * título) não invalida links já publicados.
+ */
+export async function updatePost(db: Database, slug: string, values: PostInput) {
+  const [updated] = await db
+    .update(posts)
+    .set(values)
+    .where(eq(posts.slug, slug))
+    .returning({ id: posts.id })
+
+  if (!updated) return null
+
+  const [post] = await selectPosts(db, slug)
+  return post ?? null
+}
+
+export async function removePost(db: Database, slug: string) {
+  const removed = await db
+    .delete(posts)
+    .where(eq(posts.slug, slug))
+    .returning({ id: posts.id })
+
+  return removed.length > 0
 }

@@ -16,6 +16,9 @@ async function logout() {
     <div class="topbar__left">
       <NuxtLink to="/" class="topbar__link">Dasha Cave</NuxtLink>
       <NuxtLink to="/blog" class="topbar__link">Blog</NuxtLink>
+      <NuxtLink v-if="loggedIn && user?.role === 'admin'" to="/admin/usuarios" class="topbar__link">
+        Usuários
+      </NuxtLink>
       <NuxtLink to="https://www.amazon.com.br/stores/Dasha-Cave/author/B0G86SCW8B" class="topbar__link flex items-center gap-1" target="_blank">
         Amazon
         <Icon name="lucide:external-link" class="topbar__link-icon" aria-hidden="true" />

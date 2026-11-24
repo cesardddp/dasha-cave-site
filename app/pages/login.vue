@@ -1,26 +1,35 @@
 <script setup lang="ts">
-import { reactive, shallowRef } from 'vue'
+import { computed, reactive, shallowRef } from 'vue'
 
 const { loggedIn, user, fetch: refreshSession } = useUserSession()
 const route = useRoute()
+const mode = shallowRef<'login' | 'register'>('login')
 const pending = shallowRef(false)
 const error = shallowRef('')
-const form = reactive({ email: '', password: '' })
+const form = reactive({ name: '', email: '', password: '' })
+const visibleError = computed(() => error.value || (
+  route.query.error === 'google' && mode.value === 'login'
+    ? 'Não foi possível entrar com o Google. Tente novamente.'
+    : ''
+))
 
-useSeoMeta({ title: 'Entrar — Dasha Cave' })
+useSeoMeta({ title: () => mode.value === 'register' ? 'Criar conta — Dasha Cave' : 'Entrar — Dasha Cave' })
 
 async function submit() {
   pending.value = true
   error.value = ''
 
   try {
-    await $fetch('/api/auth/login', {
+    await $fetch(mode.value === 'register' ? '/api/auth/register' : '/api/auth/login', {
       method: 'POST',
       body: form,
     })
     await refreshSession()
 
-    const destination = route.query.redirect === '/livros/admin' ? '/livros/admin' : '/blog'
+    const requestedRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    const destination = ['/livros/admin', '/admin/usuarios'].includes(requestedRedirect)
+      ? requestedRedirect
+      : '/blog'
     await navigateTo(destination)
   }
   catch (cause) {
@@ -66,9 +75,20 @@ async function logout() {
 
       <template v-else>
         <h1 class="auth-page__title">
-          Entrar
+          {{ mode === 'register' ? 'Criar conta' : 'Entrar' }}
         </h1>
         <form class="auth-page__form" @submit.prevent="submit">
+          <UInput
+            v-if="mode === 'register'"
+            v-model="form.name"
+            type="text"
+            placeholder="Nome"
+            autocomplete="name"
+            minlength="2"
+            maxlength="100"
+            required
+            size="lg"
+          />
           <UInput
             v-model="form.email"
             type="email"
@@ -81,19 +101,35 @@ async function logout() {
             v-model="form.password"
             type="password"
             placeholder="Senha"
-            autocomplete="current-password"
+            :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
+            :minlength="mode === 'register' ? 8 : undefined"
+            maxlength="128"
             required
             size="lg"
           />
-          <p v-if="error" class="auth-page__error" role="alert">
-            {{ error }}
+          <p v-if="visibleError" class="auth-page__error" role="alert">
+            {{ visibleError }}
           </p>
           <UButton type="submit" block size="lg" :loading="pending">
-            Entrar
+            {{ mode === 'register' ? 'Criar conta' : 'Entrar' }}
           </UButton>
-          <p class="auth-page__hint" role="status">
-            A criação de contas continua desativada.
+          <p v-if="mode === 'register'" class="auth-page__hint">
+            Sua conta será criada como comentadora do blog. Ainda não enviamos e-mail de confirmação.
           </p>
+          <button
+            class="auth-page__mode-toggle"
+            type="button"
+            @click="mode = mode === 'login' ? 'register' : 'login'; error = ''"
+          >
+            {{ mode === 'register' ? 'Já tem uma conta? Entre' : 'Não tem uma conta? Cadastre-se' }}
+          </button>
+          <div class="auth-page__separator" aria-hidden="true">
+            <span>ou</span>
+          </div>
+          <a class="auth-page__google" href="/auth/google">
+            <UIcon name="i-simple-icons-google" aria-hidden="true" />
+            Continuar com Google
+          </a>
         </form>
       </template>
     </div>
@@ -145,6 +181,54 @@ async function logout() {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.auth-page__mode-toggle {
+  padding: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: #00ffaa;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-page__separator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgb(255 255 255 / 55%);
+  font-size: 0.8rem;
+}
+
+.auth-page__separator::before,
+.auth-page__separator::after {
+  height: 1px;
+  flex: 1;
+  background: rgb(255 255 255 / 18%);
+  content: "";
+}
+
+.auth-page__google {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 0.65rem;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-page__google:hover {
+  background: rgb(255 255 255 / 8%);
+}
+
+.auth-page__google:focus-visible,
+.auth-page__mode-toggle:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
 }
 
 .auth-page__error {

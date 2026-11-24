@@ -33,12 +33,7 @@ async function submit() {
     await navigateTo(destination)
   }
   catch (cause) {
-    error.value = cause && typeof cause === 'object' && 'statusMessage' in cause
-      && typeof cause.statusMessage === 'string'
-      ? cause.statusMessage
-      : cause instanceof Error
-        ? cause.message
-        : 'Não foi possível entrar.'
+    error.value = getErrorMessage(cause, 'Não foi possível entrar.')
   }
   finally {
     pending.value = false

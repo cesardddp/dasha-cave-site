@@ -172,7 +172,7 @@ async function fetchAmazonPage(asin: string) {
     const timedOut = cause instanceof Error && cause.name === 'TimeoutError'
     throw createError({
       statusCode: timedOut ? 504 : 502,
-      statusMessage: timedOut
+      message: timedOut
         ? 'A Amazon demorou demais para responder'
         : 'Não foi possível consultar a página da Amazon',
     })
@@ -181,7 +181,7 @@ async function fetchAmazonPage(asin: string) {
   if (!response.ok) {
     throw createError({
       statusCode: 502,
-      statusMessage: `A consulta à Amazon falhou (HTTP ${response.status})`,
+      message: `A consulta à Amazon falhou (HTTP ${response.status})`,
     })
   }
 
@@ -200,14 +200,14 @@ async function fetchAmazonCover(url: string) {
   catch {
     throw createError({
       statusCode: 502,
-      statusMessage: 'Os dados foram importados, mas não foi possível baixar a capa. Envie a imagem manualmente.',
+      message: 'Os dados foram importados, mas não foi possível baixar a capa. Envie a imagem manualmente.',
     })
   }
 
   if (!response.ok) {
     throw createError({
       statusCode: 502,
-      statusMessage: `A Amazon não entregou a capa (HTTP ${response.status}). Envie a imagem manualmente.`,
+      message: `A Amazon não entregou a capa (HTTP ${response.status}). Envie a imagem manualmente.`,
     })
   }
 
@@ -218,7 +218,7 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
   const amazonUrl = normalizeAmazonUrl(value)
   const asin = new URL(amazonUrl).pathname.match(/\/dp\/([A-Z0-9]{10})/i)?.[1].toUpperCase()
   if (!asin) {
-    throw createError({ statusCode: 400, statusMessage: 'Não foi possível identificar o ASIN no link' })
+    throw createError({ statusCode: 400, message: 'Não foi possível identificar o ASIN no link' })
   }
 
   const markdown = await fetchAmazonPage(asin)
@@ -227,7 +227,7 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
   if (!amazonTitle || /amazon\.com\.br/i.test(amazonTitle) || /^seguir o autor$/i.test(amazonTitle)) {
     throw createError({
       statusCode: 502,
-      statusMessage: 'Não encontrei os dados do livro na Amazon. Confira o link e tente novamente.',
+      message: 'Não encontrei os dados do livro na Amazon. Confira o link e tente novamente.',
     })
   }
 
@@ -250,13 +250,7 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
       coverData = await fetchAmazonCover(imageUrl)
     }
     catch (cause) {
-      const message = cause && typeof cause === 'object' && 'statusMessage' in cause
-        && typeof cause.statusMessage === 'string'
-        ? cause.statusMessage
-        : cause instanceof Error
-          ? cause.message
-          : 'Não foi possível baixar a capa. Envie a imagem manualmente.'
-      warnings.push(message)
+      warnings.push(getErrorMessage(cause, 'Não foi possível baixar a capa. Envie a imagem manualmente.'))
     }
 
     if (coverData) {
@@ -264,13 +258,7 @@ export async function importAmazonBook(value: unknown): Promise<AmazonBookImport
         downloadedImage = await saveBookImage(coverData)
       }
       catch (cause) {
-        const message = cause && typeof cause === 'object' && 'statusMessage' in cause
-          && typeof cause.statusMessage === 'string'
-          ? cause.statusMessage
-          : cause instanceof Error
-            ? cause.message
-            : 'Não foi possível salvar a capa. Envie a imagem manualmente.'
-        warnings.push(message)
+        warnings.push(getErrorMessage(cause, 'Não foi possível salvar a capa. Envie a imagem manualmente.'))
       }
 
       try {

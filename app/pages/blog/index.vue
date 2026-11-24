@@ -46,8 +46,7 @@ async function uploadImage(event: Event) {
     if (imageBucketOpen.value) await loadImageBucket()
   }
   catch (error) {
-    imageError.value = (error as { statusMessage?: string })?.statusMessage
-      ?? 'Não foi possível enviar a imagem.'
+    imageError.value = getErrorMessage(error, 'Não foi possível enviar a imagem.')
   }
   finally {
     uploadingImage.value = false
@@ -62,8 +61,7 @@ async function loadImageBucket() {
     imageAssets.value = await $fetch<PostImageAsset[]>('/api/posts/images')
   }
   catch (error) {
-    imageError.value = (error as { statusMessage?: string })?.statusMessage
-      ?? 'Não foi possível carregar as imagens.'
+    imageError.value = getErrorMessage(error, 'Não foi possível carregar as imagens.')
   }
   finally {
     bucketLoading.value = false
@@ -118,10 +116,9 @@ async function submitPost() {
     if (editing) await refreshNuxtData(`blog-post-${editing}`)
   }
   catch (error) {
-    composerError.value = (error as { statusMessage?: string })?.statusMessage
-      ?? (editing
-        ? 'Não foi possível salvar as alterações.'
-        : 'Não foi possível publicar o post.')
+    composerError.value = getErrorMessage(error, editing
+      ? 'Não foi possível salvar as alterações.'
+      : 'Não foi possível publicar o post.')
   }
   finally {
     submitting.value = false
@@ -155,8 +152,7 @@ async function deletePost(slug: string) {
     await refreshNuxtData(`blog-post-${slug}`)
   }
   catch (error) {
-    composerError.value = (error as { statusMessage?: string })?.statusMessage
-      ?? 'Não foi possível apagar o post.'
+    composerError.value = getErrorMessage(error, 'Não foi possível apagar o post.')
   }
 }
 
@@ -319,17 +315,13 @@ useSeoMeta({
         <header class="feed__meta">
           <NuxtLink class="feed__author" :to="`/blog/${post.slug}`">
             <NuxtImg
-              v-if="post.author.avatar"
               class="feed__avatar"
-              :src="post.author.avatar"
+              :src="post.author.name === 'Dasha' || !post.author.avatar ? '/imagens/dasha_icon.webp' : post.author.avatar"
               :alt="`Avatar de ${post.author.name}`"
               width="44"
               height="44"
               loading="lazy"
             />
-            <span v-else class="feed__avatar feed__avatar--fallback" aria-hidden="true">
-              {{ post.author.name.charAt(0).toUpperCase() }}
-            </span>
             <span class="feed__author-info">
               <span class="feed__author-name">{{ post.author.name }}</span>
               <time class="feed__date" :datetime="post.publishedAt">{{ formatDate(post.publishedAt) }}</time>
@@ -583,16 +575,6 @@ useSeoMeta({
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-}
-
-.feed__avatar--fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #c8102e;
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.1rem;
 }
 
 .feed__author-info {

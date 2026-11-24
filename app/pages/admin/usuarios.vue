@@ -39,15 +39,7 @@ const adminCount = computed(() =>
 )
 
 function showError(cause: unknown) {
-  if (cause && typeof cause === 'object' && 'statusMessage' in cause && typeof cause.statusMessage === 'string') {
-    errorMessage.value = cause.statusMessage
-  }
-  else if (cause instanceof Error) {
-    errorMessage.value = cause.message
-  }
-  else {
-    errorMessage.value = 'Não foi possível concluir a operação.'
-  }
+  errorMessage.value = getErrorMessage(cause, 'Não foi possível concluir a operação.')
 }
 
 function resetMessages() {
@@ -182,10 +174,6 @@ function formatDate(value: string) {
     ? '—'
     : date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
-
-function initials(name: string) {
-  return name.trim().slice(0, 1).toUpperCase() || '?'
-}
 </script>
 
 <template>
@@ -296,7 +284,7 @@ function initials(name: string) {
           <li v-for="account in filteredAccounts" :key="account.id" class="user-admin__row">
             <div class="user-admin__identity">
               <span class="user-admin__avatar" aria-hidden="true">
-                {{ initials(account.name) }}
+                <img :src="account.avatar || '/imagens/dasha_icon.webp'" alt="" loading="lazy">
               </span>
               <div>
                 <p class="user-admin__name">
@@ -615,6 +603,7 @@ function initials(name: string) {
 
 .user-admin__avatar {
   display: grid;
+  overflow: hidden;
   width: 2.4rem;
   height: 2.4rem;
   flex: none;
@@ -624,6 +613,13 @@ function initials(name: string) {
   background: rgb(0 70 48 / 55%);
   color: #b7ffe6;
   font-weight: 800;
+}
+
+.user-admin__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-admin__name {

@@ -68,15 +68,7 @@ const detailsText = computed({
 })
 
 function showError(cause: unknown) {
-  if (cause && typeof cause === 'object' && 'statusMessage' in cause && typeof cause.statusMessage === 'string') {
-    errorMessage.value = cause.statusMessage
-  }
-  else if (cause instanceof Error) {
-    errorMessage.value = cause.message
-  }
-  else {
-    errorMessage.value = 'Não foi possível concluir a operação.'
-  }
+  errorMessage.value = getErrorMessage(cause, 'Não foi possível concluir a operação.')
 }
 
 async function loadBooks() {

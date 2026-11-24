@@ -7,7 +7,7 @@ const slug = route.params.slug as string
 const { data: post, error } = await useBlogPost(slug)
 
 if (error.value || !post.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Post não encontrado', fatal: true })
+  throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Post não encontrado', fatal: true })
 }
 
 const { loggedIn, user } = useUserSession()
@@ -21,7 +21,7 @@ const authors = computed(() => [
   {
     name: post.value?.author.name ?? 'Dasha',
     description: post.value?.author.bio ?? undefined,
-    avatar: post.value?.author.avatar ? { src: post.value.author.avatar } : undefined,
+    avatar: { src: post.value?.author.name === 'Dasha' || !post.value?.author.avatar ? '/imagens/dasha_icon.webp' : post.value.author.avatar },
   },
 ])
 
@@ -38,8 +38,7 @@ async function deletePost() {
     await navigateTo('/blog')
   }
   catch (err) {
-    actionError.value = (err as { statusMessage?: string })?.statusMessage
-      ?? 'Não foi possível apagar o post.'
+    actionError.value = getErrorMessage(err, 'Não foi possível apagar o post.')
   }
   finally {
     deleting.value = false

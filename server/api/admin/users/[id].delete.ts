@@ -11,13 +11,13 @@ export default defineEventHandler(async (event) => {
     case 'deleted':
       return { id, deleted: true }
     case 'not-found':
-      throw createError({ statusCode: 404, statusMessage: 'Usuário não encontrado' })
+      throw createError({ statusCode: 404, message: 'Usuário não encontrado' })
     case 'config-admin':
       throw createError({
         statusCode: 409,
-        statusMessage: 'Este administrador é definido pela configuração do servidor e não pode ser excluído',
+        message: 'Este administrador é definido pela configuração do servidor e não pode ser excluído',
       })
     case 'last-admin':
-      throw createError({ statusCode: 409, statusMessage: 'O site precisa de pelo menos um administrador' })
+      throw createError({ statusCode: 409, message: 'O site precisa de pelo menos um administrador' })
   }
 })

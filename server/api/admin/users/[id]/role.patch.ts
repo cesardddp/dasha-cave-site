@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<{ role?: string } | null>(event)
   if (body?.role !== 'admin' && body?.role !== 'commenter') {
-    throw createError({ statusCode: 400, statusMessage: 'Perfil inválido: use admin ou commenter' })
+    throw createError({ statusCode: 400, message: 'Perfil inválido: use admin ou commenter' })
   }
 
   const result = await updateManagedUserRole(id, body.role, configuredAdminIds(event))
@@ -16,13 +16,13 @@ export default defineEventHandler(async (event) => {
     case 'updated':
       return { id, role: body.role }
     case 'not-found':
-      throw createError({ statusCode: 404, statusMessage: 'Usuário não encontrado' })
+      throw createError({ statusCode: 404, message: 'Usuário não encontrado' })
     case 'config-admin':
       throw createError({
         statusCode: 409,
-        statusMessage: 'Este administrador é definido pela configuração do servidor e não pode ser rebaixado',
+        message: 'Este administrador é definido pela configuração do servidor e não pode ser rebaixado',
       })
     case 'last-admin':
-      throw createError({ statusCode: 409, statusMessage: 'O site precisa de pelo menos um administrador' })
+      throw createError({ statusCode: 409, message: 'O site precisa de pelo menos um administrador' })
   }
 })

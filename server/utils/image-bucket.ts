@@ -71,12 +71,12 @@ export async function listBucketImages(bucket: ImageBucket): Promise<ImageAsset[
 
 export async function saveBucketImage(bucket: ImageBucket, data: Uint8Array) {
   if (data.byteLength === 0 || data.byteLength > maximumImageSize) {
-    throw createError({ statusCode: 413, statusMessage: 'A imagem deve ter até 5 MB' })
+    throw createError({ statusCode: 413, message: 'A imagem deve ter até 5 MB' })
   }
 
   const extension = imageExtension(data)
   if (!extension) {
-    throw createError({ statusCode: 415, statusMessage: 'Envie uma imagem JPEG, PNG ou WebP válida' })
+    throw createError({ statusCode: 415, message: 'Envie uma imagem JPEG, PNG ou WebP válida' })
   }
 
   const filename = `${randomUUID()}.${extension}`
@@ -93,7 +93,7 @@ export async function sendBucketImage(
   const match = filename.match(imageFilenamePattern)
 
   if (!match) {
-    throw createError({ statusCode: 404, statusMessage: 'Imagem não encontrada' })
+    throw createError({ statusCode: 404, message: 'Imagem não encontrada' })
   }
 
   let data: Buffer
@@ -102,7 +102,7 @@ export async function sendBucketImage(
   }
   catch (cause) {
     if (cause instanceof Error && 'code' in cause && cause.code === 'ENOENT') {
-      throw createError({ statusCode: 404, statusMessage: 'Imagem não encontrada' })
+      throw createError({ statusCode: 404, message: 'Imagem não encontrada' })
     }
     throw cause
   }

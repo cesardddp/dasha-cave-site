@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   const slug = getRouterParam(event, 'slug') ?? ''
   if (!slug) {
-    throw createError({ statusCode: 400, statusMessage: 'Slug obrigatório' })
+    throw createError({ statusCode: 400, message: 'Slug obrigatório' })
   }
 
   const values = normalizePostInput(await readBody(event))
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const post = await updatePost(db, slug, values)
 
   if (!post) {
-    throw createError({ statusCode: 404, statusMessage: 'Post não encontrado' })
+    throw createError({ statusCode: 404, message: 'Post não encontrado' })
   }
 
   return post

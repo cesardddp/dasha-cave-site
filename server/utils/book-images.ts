@@ -18,11 +18,11 @@ export async function saveBookImage(data: Uint8Array) {
 export async function readLimitedResponse(response: Response, maximumSize: number) {
   const declaredLength = Number(response.headers.get('content-length'))
   if (Number.isFinite(declaredLength) && declaredLength > maximumSize) {
-    throw createError({ statusCode: 413, statusMessage: 'A resposta da Amazon excedeu o limite permitido' })
+    throw createError({ statusCode: 413, message: 'A resposta da Amazon excedeu o limite permitido' })
   }
 
   if (!response.body) {
-    throw createError({ statusCode: 502, statusMessage: 'A resposta da Amazon veio vazia' })
+    throw createError({ statusCode: 502, message: 'A resposta da Amazon veio vazia' })
   }
 
   const reader = response.body.getReader()
@@ -35,7 +35,7 @@ export async function readLimitedResponse(response: Response, maximumSize: numbe
     total += value.byteLength
     if (total > maximumSize) {
       await reader.cancel()
-      throw createError({ statusCode: 413, statusMessage: 'A resposta da Amazon excedeu o limite permitido' })
+      throw createError({ statusCode: 413, message: 'A resposta da Amazon excedeu o limite permitido' })
     }
     chunks.push(value)
   }

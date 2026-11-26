@@ -15,13 +15,13 @@ export default defineEventHandler(async (event) => {
   const role = body?.role === 'admin' ? 'admin' : 'commenter'
 
   if (name.length < 2 || name.length > 100) {
-    throw createError({ statusCode: 400, statusMessage: 'O nome deve ter entre 2 e 100 caracteres' })
+    throw createError({ statusCode: 400, message: 'O nome deve ter entre 2 e 100 caracteres' })
   }
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw createError({ statusCode: 400, statusMessage: 'Informe um e-mail válido' })
+    throw createError({ statusCode: 400, message: 'Informe um e-mail válido' })
   }
   if (password && (password.length < 8 || password.length > 128)) {
-    throw createError({ statusCode: 400, statusMessage: 'A senha deve ter entre 8 e 128 caracteres' })
+    throw createError({ statusCode: 400, message: 'A senha deve ter entre 8 e 128 caracteres' })
   }
 
   try {
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (cause) {
     if (isUniqueEmailViolation(cause)) {
-      throw createError({ statusCode: 409, statusMessage: 'Já existe uma conta com este e-mail' })
+      throw createError({ statusCode: 409, message: 'Já existe uma conta com este e-mail' })
     }
     throw cause
   }

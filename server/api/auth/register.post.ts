@@ -10,7 +10,7 @@ function uniqueEmailError(cause: unknown): cause is Error & { errcode: number } 
 export default defineEventHandler(async (event) => {
   const body: unknown = await readBody(event)
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw createError({ statusCode: 400, statusMessage: 'Dados de cadastro inválidos' })
+    throw createError({ statusCode: 400, message: 'Dados de cadastro inválidos' })
   }
 
   const input = body as Record<string, unknown>
@@ -19,13 +19,13 @@ export default defineEventHandler(async (event) => {
   const password = typeof input.password === 'string' ? input.password : ''
 
   if (name.length < 2 || name.length > 100) {
-    throw createError({ statusCode: 400, statusMessage: 'O nome deve ter entre 2 e 100 caracteres' })
+    throw createError({ statusCode: 400, message: 'O nome deve ter entre 2 e 100 caracteres' })
   }
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw createError({ statusCode: 400, statusMessage: 'Informe um e-mail válido' })
+    throw createError({ statusCode: 400, message: 'Informe um e-mail válido' })
   }
   if (password.length < 8 || password.length > 128) {
-    throw createError({ statusCode: 400, statusMessage: 'A senha deve ter entre 8 e 128 caracteres' })
+    throw createError({ statusCode: 400, message: 'A senha deve ter entre 8 e 128 caracteres' })
   }
 
   const passwordHash = await hashPassword(password)
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (cause) {
     if (uniqueEmailError(cause)) {
-      throw createError({ statusCode: 409, statusMessage: 'Já existe uma conta com este e-mail' })
+      throw createError({ statusCode: 409, message: 'Já existe uma conta com este e-mail' })
     }
     throw cause
   }

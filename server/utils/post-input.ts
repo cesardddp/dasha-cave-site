@@ -39,7 +39,7 @@ export function normalizePostInput(value: unknown): PostInput {
   if (!title || !description || !content) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Título, descrição e conteúdo são obrigatórios',
+      message: 'Título, descrição e conteúdo são obrigatórios',
     })
   }
 

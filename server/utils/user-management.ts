@@ -16,7 +16,7 @@ export function configuredAdminIds(event: H3Event): number[] {
 export function parseUserId(raw: string | undefined): number {
   const id = Number(raw)
   if (!Number.isSafeInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: 'Identificador de usuário inválido' })
+    throw createError({ statusCode: 400, message: 'Identificador de usuário inválido' })
   }
   return id
 }

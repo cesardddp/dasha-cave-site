@@ -111,6 +111,25 @@ async function createTables(db: Database, sqlite: DatabaseSync) {
     sqlite.exec("alter table users add column role text not null default 'commenter' check (role in ('admin', 'commenter'))")
   }
 
+  if (!userColumns.some(column => column.name === 'email_verified_at')) {
+    sqlite.exec('alter table users add column email_verified_at text')
+    // Contas criadas antes da verificação de e-mail continuam entrando normalmente.
+    sqlite.exec('update users set email_verified_at = created_at where email_verified_at is null')
+  }
+
+  await db.run(sql`
+    create table if not exists auth_tokens (
+      id integer primary key autoincrement,
+      user_id integer not null references users (id) on delete cascade,
+      purpose text not null check (purpose in ('email_verification', 'password_reset')),
+      token_hash text not null unique,
+      expires_at text not null,
+      created_at text not null
+    )
+  `)
+
+  await db.run(sql`create index if not exists auth_tokens_user_purpose_idx on auth_tokens (user_id, purpose)`)
+
   await db.run(sql`
     create table if not exists posts (
       id integer primary key autoincrement,
@@ -169,7 +188,7 @@ function findAccountByEmail(sqlite: DatabaseSync, email: string): AuthAccount | 
   `).get(email) as AuthAccount | undefined
 }
 
-function withDatabaseTransaction<T>(sqlite: DatabaseSync, write: () => T): T {
+export function withDatabaseTransaction<T>(sqlite: DatabaseSync, write: () => T): T {
   sqlite.exec('BEGIN IMMEDIATE;')
   try {
     const result = write()
@@ -187,18 +206,21 @@ export async function createUserAccount(account: {
   email: string
   passwordHash: string
   role?: ManagedUserRole
+  emailVerified?: boolean
 }): Promise<AuthAccount> {
   const sqlite = await useSqlite()
 
+  const now = new Date().toISOString()
   const result = sqlite.prepare(`
-    insert into users (name, email, password_hash, role, created_at)
-    values (?, ?, ?, ?, ?)
+    insert into users (name, email, password_hash, role, email_verified_at, created_at)
+    values (?, ?, ?, ?, ?, ?)
   `).run(
     account.name,
     account.email,
     account.passwordHash,
     account.role ?? 'commenter',
-    new Date().toISOString(),
+    account.emailVerified ? now : null,
+    now,
   )
 
   return {
@@ -262,6 +284,32 @@ export async function updateManagedUserPassword(id: number, passwordHash: string
   return result.changes > 0
 }
 
+export interface AccountCredentials {
+  id: number
+  name: string
+  email: string
+  avatar: string | null
+  passwordHash: string
+  emailVerifiedAt: string | null
+}
+
+export async function findCredentialsByEmail(email: string): Promise<AccountCredentials | undefined> {
+  const sqlite = await useSqlite()
+
+  return sqlite.prepare(`
+    select id, name, email, avatar, password_hash as passwordHash, email_verified_at as emailVerifiedAt
+    from users
+    where email = ?
+  `).get(email) as AccountCredentials | undefined
+}
+
+export async function markEmailVerified(id: number): Promise<void> {
+  const sqlite = await useSqlite()
+
+  sqlite.prepare('update users set email_verified_at = ? where id = ? and email_verified_at is null')
+    .run(new Date().toISOString(), id)
+}
+
 export async function getOrCreateGoogleAccount(profile: GoogleAccountProfile): Promise<AuthAccount> {
   const sqlite = await useSqlite()
 
@@ -287,15 +335,17 @@ export async function getOrCreateGoogleAccount(profile: GoogleAccountProfile): P
         throw new Error('A conta Google apareceu durante a vinculação, mas o hash não foi gerado')
       }
 
+      const now = new Date().toISOString()
       const inserted = sqlite.prepare(`
-        insert into users (name, email, password_hash, avatar, created_at)
-        values (?, ?, ?, ?, ?)
+        insert into users (name, email, password_hash, avatar, email_verified_at, created_at)
+        values (?, ?, ?, ?, ?, ?)
       `).run(
         profile.name,
         profile.email,
         generatedPasswordHash,
         profile.avatar,
-        new Date().toISOString(),
+        now,
+        now,
       )
       account = {
         id: Number(inserted.lastInsertRowid),
@@ -303,6 +353,11 @@ export async function getOrCreateGoogleAccount(profile: GoogleAccountProfile): P
         email: profile.email,
         avatar: profile.avatar,
       }
+    }
+    else {
+      // O Google já provou a posse do e-mail.
+      sqlite.prepare('update users set email_verified_at = ? where id = ? and email_verified_at is null')
+        .run(new Date().toISOString(), account.id)
     }
 
     sqlite.prepare(`
@@ -362,7 +417,12 @@ async function seed(db: Database) {
   let [author] = await db.select({ id: schema.users.id }).from(schema.users).limit(1)
 
   if (!author) {
-    const password = process.env.SEED_PASSWORD ?? 'dasha-cave'
+    const password = process.env.SEED_PASSWORD
+
+    if (!password) {
+      console.warn('[seed] SEED_PASSWORD ausente; usuário inicial não foi criado.')
+      return
+    }
 
     ;[author] = await db
       .insert(schema.users)
@@ -370,8 +430,10 @@ async function seed(db: Database) {
         name: 'Dasha',
         email: 'dasha@dashacave.com.br',
         passwordHash: await hashPassword(password),
-        avatar: '/imagens/dasha_icon.jpg',
+        avatar: '/imagens/dasha_icon.webp',
         bio: 'Anfitriã da caverna. Escreve sobre música pesada, noites longas e o que sobra depois delas.',
+        // A conta inicial já nasce confirmada: ela existe antes do fluxo de verificação.
+        emailVerifiedAt: new Date().toISOString(),
       })
       .returning({ id: schema.users.id })
   }

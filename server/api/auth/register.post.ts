@@ -1,5 +1,6 @@
+import { issueAuthToken } from '../../utils/auth-tokens'
 import { createUserAccount } from '../../utils/db'
-import { readUserRole } from '../../utils/user-roles'
+import { sendVerificationEmail } from '../../utils/mail'
 
 function uniqueEmailError(cause: unknown): cause is Error & { errcode: number } {
   return cause instanceof Error
@@ -40,13 +41,8 @@ export default defineEventHandler(async (event) => {
     throw cause
   }
 
-  const role = await readUserRole(event, account.id)
-  const user = { ...account, role }
-  await setUserSession(event, {
-    user,
-    loggedInAt: new Date().toISOString(),
-  })
-
+  const { token } = await issueAuthToken(account.id, 'email_verification')
+  await sendVerificationEmail(event, { name: account.name, email: account.email }, token)
   setResponseStatus(event, 201)
-  return user
+  return { email: account.email, verificationSent: true }
 })

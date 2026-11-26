@@ -38,6 +38,9 @@ export async function createManagedUser(input: {
     email: input.email,
     passwordHash,
     role: input.role,
+    // Quem cria a conta pelo painel já entrega a senha pessoalmente,
+    // então não faz sentido exigir a confirmação de e-mail.
+    emailVerified: true,
   })
 
   return { account, password }

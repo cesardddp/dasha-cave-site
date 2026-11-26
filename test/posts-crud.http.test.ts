@@ -64,16 +64,32 @@ function errorMessage(data: unknown): string {
   if (!data || typeof data !== 'object')
     return ''
   const record = data as Record<string, unknown>
-  return String(record.statusMessage ?? record.message ?? '')
+  return String(record.message ?? record.statusMessage ?? '')
+}
+
+/** Confirma o e-mail direto no arquivo SQLite e devolve o id da conta. */
+function confirmEmailDirectly(email: string): number {
+  const db = new DatabaseSync(databasePath)
+  try {
+    db.prepare('update users set email_verified_at = ? where email = ?')
+      .run(new Date().toISOString(), email)
+    const row = db.prepare('select id from users where email = ?').get(email) as { id: number }
+    return row.id
+  }
+  finally {
+    db.close()
+  }
 }
 
 async function createAccount(name: string, email: string) {
-  const response = await api<{ id: number }>('/api/auth/register', {
+  const response = await api('/api/auth/register', {
     method: 'POST',
     body: { name, email, password: PASSWORD },
   })
   expect(response.status).toBe(201)
-  return response.data.id
+  expect(response.data.verificationSent).toBe(true)
+  expect(response.cookie).toBe('')
+  return confirmEmailDirectly(email)
 }
 
 function promote(id: number) {

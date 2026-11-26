@@ -1,43 +1,118 @@
 <script setup lang="ts">
 import { computed, reactive, shallowRef } from 'vue'
 
-const { loggedIn, user, fetch: refreshSession } = useUserSession()
 const route = useRoute()
-const mode = shallowRef<'login' | 'register'>('login')
+const { loggedIn, user, fetch: refreshSession } = useUserSession()
+
+type AuthMode = 'login' | 'register' | 'forgot'
+const mode = shallowRef<AuthMode>('login')
 const pending = shallowRef(false)
 const error = shallowRef('')
+const notice = shallowRef('')
+const awaitingVerification = shallowRef('')
 const form = reactive({ name: '', email: '', password: '' })
+
+const title = computed(() => {
+  if (awaitingVerification.value) return 'Confirme seu e-mail'
+  if (mode.value === 'register') return 'Criar conta'
+  if (mode.value === 'forgot') return 'Recuperar senha'
+  return 'Entrar'
+})
+
+useSeoMeta({ title: () => `${title.value} — Dasha Cave` })
+
 const visibleError = computed(() => error.value || (
   route.query.error === 'google' && mode.value === 'login'
     ? 'Não foi possível entrar com o Google. Tente novamente.'
     : ''
 ))
 
-useSeoMeta({ title: () => mode.value === 'register' ? 'Criar conta — Dasha Cave' : 'Entrar — Dasha Cave' })
+function isEmailNotVerified(cause: unknown): boolean {
+  const data = cause && typeof cause === 'object'
+    ? (cause as { data?: { data?: { code?: string } } }).data
+    : undefined
+  return data?.data?.code === 'email_not_verified'
+}
+
+const redirectTo = () => {
+  const next = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+  return ['/livros/admin', '/admin/usuarios'].includes(next) ? next : '/blog'
+}
 
 async function submit() {
   pending.value = true
   error.value = ''
+  notice.value = ''
 
   try {
-    await $fetch(mode.value === 'register' ? '/api/auth/register' : '/api/auth/login', {
+    if (mode.value === 'forgot') {
+      const response = await $fetch<{ message?: string }>('/api/auth/forgot-password', {
+        method: 'POST',
+        body: { email: form.email },
+      })
+      notice.value = response.message ?? 'Se este e-mail estiver cadastrado, enviaremos as instruções para redefinir a senha.'
+      return
+    }
+
+    if (mode.value === 'register') {
+      await $fetch('/api/auth/register', {
+        method: 'POST',
+        body: { name: form.name, email: form.email, password: form.password },
+      })
+      awaitingVerification.value = form.email
+      return
+    }
+
+    await $fetch('/api/auth/login', {
       method: 'POST',
-      body: form,
+      body: { email: form.email, password: form.password },
     })
     await refreshSession()
-
-    const requestedRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
-    const destination = ['/livros/admin', '/admin/usuarios'].includes(requestedRedirect)
-      ? requestedRedirect
-      : '/blog'
-    await navigateTo(destination)
+    await navigateTo(redirectTo())
   }
   catch (cause) {
-    error.value = getErrorMessage(cause, 'Não foi possível entrar.')
+    if (mode.value === 'login' && isEmailNotVerified(cause)) {
+      awaitingVerification.value = form.email
+      return
+    }
+    error.value = getErrorMessage(cause, 'Não foi possível concluir a operação. Tente novamente.')
   }
   finally {
     pending.value = false
   }
+}
+
+async function resendVerification() {
+  pending.value = true
+  notice.value = ''
+  error.value = ''
+  try {
+    const response = await $fetch<{ message?: string }>('/api/auth/resend-verification', {
+      method: 'POST',
+      body: { email: awaitingVerification.value },
+    })
+    notice.value = response.message ?? 'Enviamos um novo link de confirmação.'
+  }
+  catch {
+    notice.value = 'Não foi possível reenviar agora. Tente novamente em instantes.'
+  }
+  finally {
+    pending.value = false
+  }
+}
+
+function backToLogin() {
+  awaitingVerification.value = ''
+  notice.value = ''
+  error.value = ''
+  form.password = ''
+  mode.value = 'login'
+}
+
+function switchMode(next: AuthMode) {
+  mode.value = next
+  error.value = ''
+  notice.value = ''
 }
 
 async function logout() {
@@ -55,7 +130,7 @@ async function logout() {
     <div class="auth-page__card">
       <template v-if="loggedIn">
         <h1 class="auth-page__title">
-          Olá, {{ user?.name }}
+          Você já está conectada
         </h1>
         <p class="auth-page__hint">
           Você está conectado como {{ user?.email }}.
@@ -68,9 +143,30 @@ async function logout() {
         </UButton>
       </template>
 
+      <template v-else-if="awaitingVerification">
+        <h1 class="auth-page__title">
+          Confirme seu e-mail
+        </h1>
+        <p class="auth-page__hint">
+          Enviamos um link de confirmação para <strong>{{ awaitingVerification }}</strong>.
+          Ele vale por 24 horas. Confirme o e-mail para poder entrar.
+        </p>
+        <p v-if="notice" class="auth-page__notice" role="status">
+          {{ notice }}
+        </p>
+        <div class="auth-page__actions">
+          <UButton block size="lg" :loading="pending" @click="resendVerification">
+            Reenviar link de confirmação
+          </UButton>
+          <button class="auth-page__mode-toggle" type="button" @click="backToLogin">
+            Voltar para o login
+          </button>
+        </div>
+      </template>
+
       <template v-else>
         <h1 class="auth-page__title">
-          {{ mode === 'register' ? 'Criar conta' : 'Entrar' }}
+          {{ title }}
         </h1>
         <form class="auth-page__form" @submit.prevent="submit">
           <UInput
@@ -93,6 +189,7 @@ async function logout() {
             size="lg"
           />
           <UInput
+            v-if="mode !== 'forgot'"
             v-model="form.password"
             type="password"
             placeholder="Senha"
@@ -102,26 +199,51 @@ async function logout() {
             required
             size="lg"
           />
+          <p v-if="notice" class="auth-page__notice" role="status">
+            {{ notice }}
+          </p>
           <p v-if="visibleError" class="auth-page__error" role="alert">
             {{ visibleError }}
           </p>
           <UButton type="submit" block size="lg" :loading="pending">
-            {{ mode === 'register' ? 'Criar conta' : 'Entrar' }}
+            {{ mode === 'register' ? 'Criar conta' : mode === 'forgot' ? 'Enviar instruções' : 'Entrar' }}
           </UButton>
           <p v-if="mode === 'register'" class="auth-page__hint">
-            Sua conta será criada como comentadora do blog. Ainda não enviamos e-mail de confirmação.
+            Sua conta será criada como comentadora do blog. Enviaremos um e-mail para confirmar seu endereço.
           </p>
-          <button
-            class="auth-page__mode-toggle"
-            type="button"
-            @click="mode = mode === 'login' ? 'register' : 'login'; error = ''"
-          >
-            {{ mode === 'register' ? 'Já tem uma conta? Entre' : 'Não tem uma conta? Cadastre-se' }}
-          </button>
-          <div class="auth-page__separator" aria-hidden="true">
+          <p v-if="mode === 'forgot'" class="auth-page__hint">
+            Enviaremos um link válido por 1 hora para você definir uma nova senha.
+          </p>
+          <div class="auth-page__actions">
+            <button
+              v-if="mode !== 'forgot'"
+              class="auth-page__mode-toggle"
+              type="button"
+              @click="switchMode(mode === 'login' ? 'register' : 'login')"
+            >
+              {{ mode === 'register' ? 'Já tem uma conta? Entre' : 'Não tem uma conta? Cadastre-se' }}
+            </button>
+            <button
+              v-if="mode === 'login'"
+              class="auth-page__mode-toggle"
+              type="button"
+              @click="switchMode('forgot')"
+            >
+              Esqueci minha senha
+            </button>
+            <button
+              v-if="mode !== 'login'"
+              class="auth-page__mode-toggle"
+              type="button"
+              @click="switchMode('login')"
+            >
+              Voltar para o login
+            </button>
+          </div>
+          <div v-if="mode !== 'forgot'" class="auth-page__separator" aria-hidden="true">
             <span>ou</span>
           </div>
-          <a class="auth-page__google" href="/auth/google">
+          <a v-if="mode !== 'forgot'" class="auth-page__google" href="/auth/google">
             <UIcon name="i-simple-icons-google" aria-hidden="true" />
             Continuar com Google
           </a>
@@ -176,6 +298,19 @@ async function logout() {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.auth-page__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-page__notice {
+  margin: 0;
+  color: #7bf7c4;
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 .auth-page__mode-toggle {

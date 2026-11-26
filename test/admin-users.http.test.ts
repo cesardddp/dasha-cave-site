@@ -17,6 +17,8 @@ await setup({
   env: {
     NUXT_DATABASE_PATH: databasePath,
     NUXT_APP_SECRET: 'teste-de-integracao-do-painel-de-usuarios-1234567890',
+    // Conta semeada (id 1) usada no teste de administrador por configuração.
+    SEED_PASSWORD: 'senha-forte-123',
     // Fase 1 roda sem administradores fixados por configuração.
     NUXT_ADMIN_USER_IDS: '',
   },
@@ -71,7 +73,7 @@ function errorMessage(data: unknown): string {
   if (!data || typeof data !== 'object')
     return ''
   const record = data as Record<string, unknown>
-  return String(record.statusMessage ?? record.message ?? '')
+  return String(record.message ?? record.statusMessage ?? '')
 }
 
 /** Promove/rebaixa uma conta direto no arquivo SQLite, simulando um admin já existente. */
@@ -85,13 +87,38 @@ function setRoleDirectly(id: number, role: 'admin' | 'commenter') {
   }
 }
 
+/** Confirma o e-mail direto no arquivo SQLite e devolve o id da conta. */
+function confirmEmailDirectly(email: string): number {
+  const db = new DatabaseSync(databasePath)
+  try {
+    db.prepare('update users set email_verified_at = ? where email = ?')
+      .run(new Date().toISOString(), email)
+    const row = db.prepare('select id from users where email = ?').get(email) as { id: number }
+    return row.id
+  }
+  finally {
+    db.close()
+  }
+}
+
+/**
+ * Cadastra pelo endpoint público e entra na conta. O cadastro não abre sessão e
+ * exige confirmação de e-mail, então o teste confirma direto no banco em vez de
+ * depender do transporte de e-mail.
+ */
 async function register(name: string, email: string) {
-  const response = await api<{ id: number, email: string, role: string }>('/api/auth/register', {
+  const response = await api<{ email: string, verificationSent: boolean }>('/api/auth/register', {
     method: 'POST',
     body: { name, email, password: PASSWORD },
   })
   expect(response.status).toBe(201)
-  return { id: response.data.id, cookie: response.cookie }
+  expect(response.data.verificationSent).toBe(true)
+  expect(response.cookie).toBe('')
+
+  const id = confirmEmailDirectly(email)
+  const session = await login(email)
+  expect(session.status).toBe(200)
+  return { id, cookie: session.cookie }
 }
 
 async function login(email: string, password = PASSWORD) {

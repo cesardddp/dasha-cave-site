@@ -115,7 +115,7 @@ export async function sendMail(message: MailMessage): Promise<void> {
 
     throw createError({
       statusCode: 502,
-      statusMessage: 'Não foi possível enviar o e-mail. Tente novamente em instantes.',
+      message: 'Não foi possível enviar o e-mail. Tente novamente em instantes.',
     })
   }
 }

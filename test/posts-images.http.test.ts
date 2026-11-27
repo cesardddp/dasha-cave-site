@@ -95,7 +95,7 @@ function errorMessage(data: unknown): string {
   if (!data || typeof data !== 'object')
     return ''
   const record = data as Record<string, unknown>
-  return String(record.message ?? record.statusMessage ?? '')
+  return String(record.message ?? record.message ?? '')
 }
 
 /** Confirma o e-mail direto no arquivo SQLite e devolve o id da conta. */

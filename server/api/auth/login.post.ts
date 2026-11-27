@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   if (!account.emailVerifiedAt) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Confirme seu e-mail antes de entrar',
+      message: 'Confirme seu e-mail antes de entrar',
       data: { code: 'email_not_verified' },
     })
   }

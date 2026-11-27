@@ -75,7 +75,7 @@ function errorMessage(data: unknown): string {
   if (!data || typeof data !== 'object')
     return ''
   const record = data as Record<string, unknown>
-  return String(record.message ?? record.statusMessage ?? '')
+  return String(record.message ?? record.message ?? '')
 }
 
 /** Promove/rebaixa uma conta direto no arquivo SQLite, simulando um admin já existente. */

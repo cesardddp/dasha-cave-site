@@ -7,7 +7,7 @@ const slug = route.params.slug as string
 const { data: post, error } = await useBlogPost(slug)
 
 if (error.value || !post.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Post não encontrado', fatal: true })
+  throw createError({ statusCode: 404, message: 'Not Found', message: 'Post não encontrado', fatal: true })
 }
 
 const { loggedIn, user } = useUserSession()

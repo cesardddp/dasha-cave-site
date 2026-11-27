@@ -373,7 +373,7 @@ const SEED_POSTS = [
   {
     slug: 'zen-do-python',
     title: 'Zen do Python',
-    description: 'Os 19 aforismos de Tim Peters, traduzidos e comentados pela caverna.',
+    description: 'Os 19 aforismos de Tim Peters.',
     image: null,
     badge: 'Código',
     publishedAt: '2025-11-14T21:00:00.000Z',
@@ -431,7 +431,7 @@ async function seed(db: Database) {
         email: 'dasha@dashacave.com.br',
         passwordHash: await hashPassword(password),
         avatar: '/imagens/dasha_icon.webp',
-        bio: 'Anfitriã da caverna. Escreve sobre música pesada, noites longas e o que sobra depois delas.',
+        bio: 'Escritore de mundos sombrios e romances.',
         // A conta inicial já nasce confirmada: ela existe antes do fluxo de verificação.
         emailVerifiedAt: new Date().toISOString(),
       })

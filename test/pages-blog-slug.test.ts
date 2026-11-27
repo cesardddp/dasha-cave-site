@@ -19,7 +19,7 @@ registerEndpoint('/api/graphql', event => ({
       image: null,
       badge: 'Single',
       publishedAt: '2025-11-14T21:00:00.000Z',
-      author: { name: 'Dasha', avatar: null, bio: 'Anfitriã da caverna.' },
+      author: { name: 'Dasha', avatar: null, bio: '' },
     },
   },
 }))

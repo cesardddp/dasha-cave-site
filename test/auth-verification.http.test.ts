@@ -66,7 +66,7 @@ await setup({
     NUXT_SMTP_PORT: String(smtpPort),
     NUXT_SMTP_USER: '',
     NUXT_SMTP_PASS: '',
-    NUXT_MAIL_FROM: 'Caverna da Dasha <nao-responda@dashacave.test>',
+    NUXT_MAIL_FROM: 'Dasha Cave Blog <nao-responda@dashacave.test>',
     NUXT_PUBLIC_SITE_URL: 'https://dashacave.test',
   },
 })

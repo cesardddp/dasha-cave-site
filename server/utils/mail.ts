@@ -129,7 +129,7 @@ function layout(title: string, body: string): string {
     '<div style="font-family:system-ui,-apple-system,\'Segoe UI\',sans-serif;font-size:16px;color:#0f172a">',
     `<h1 style="margin:0 0 20px;font-size:20px">${title}</h1>`,
     body,
-    '<p style="margin:24px 0 0;font-size:13px;color:#64748b">Caverna da Dasha</p>',
+    '<p style="margin:24px 0 0;font-size:13px;color:#64748b">Dasha Cave Blog</p>',
     '</div>',
   ].join('')
 }

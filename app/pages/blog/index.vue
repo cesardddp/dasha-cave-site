@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { marked } from 'marked'
+import { parseBadges } from '~~/shared/utils/badges'
 
 // Consome via GraphQL (useBlogPosts → /api/graphql). A listagem é um feed
 // estilo rede social: cada post é um bloco vertical com avatar, autor,
 // data e conteúdo completo em Markdown — sem truncamento.
-const { data: posts, status } = await useBlogPosts()
+const { data: posts, status, error: postsError, refresh: refreshPosts } = await useBlogPosts()
 
 // Compositor inline: só admin cria posts. O endpoint já rejeita não-admin
 // no servidor; isto apenas evita mostrar o formulário para quem não pode usar.
@@ -12,6 +13,8 @@ const { loggedIn, user } = useUserSession()
 const isAdmin = computed(() => loggedIn.value && user.value?.role === 'admin')
 
 const draft = reactive({ title: '', description: '', content: '', badge: '', image: '' })
+// Prévia dos badges: o campo guarda tudo junto, separado por espaço.
+const draftBadges = computed(() => parseBadges(draft.badge))
 const submitting = ref(false)
 const composerError = ref('')
 const editingSlug = ref<string | null>(null)
@@ -203,7 +206,14 @@ useSeoMeta({
       <UInput v-model="draft.title" placeholder="Título" class="composer__field" />
       <UInput v-model="draft.description" placeholder="Descrição curta" class="composer__field" />
       <UTextarea v-model="draft.content" :rows="6" placeholder="Conteúdo em Markdown…" class="composer__field" />
-      <UInput v-model="draft.badge" placeholder="Badge (opcional)" class="composer__field" />
+      <UInput
+        v-model="draft.badge"
+        placeholder="Badges separados por espaço (opcional)"
+        class="composer__field"
+      />
+      <p v-if="draftBadges.length" class="composer__badges">
+        <span v-for="badge in draftBadges" :key="badge" class="feed__badge">{{ badge }}</span>
+      </p>
 
       <div class="composer__image">
         <UInput
@@ -306,6 +316,13 @@ useSeoMeta({
       Carregando posts…
     </p>
 
+    <div v-else-if="postsError" class="blog-page__empty">
+      <p>{{ getErrorMessage(postsError, 'Não foi possível carregar os posts.') }}</p>
+      <UButton color="neutral" variant="ghost" @click="refreshPosts()">
+        Tentar novamente
+      </UButton>
+    </div>
+
     <p v-else-if="!posts?.length" class="blog-page__empty">
       Nenhum post publicado ainda.
     </p>
@@ -328,7 +345,11 @@ useSeoMeta({
             </span>
           </NuxtLink>
           <div class="feed__meta-actions">
-            <span v-if="post.badge" class="feed__badge">{{ post.badge }}</span>
+            <span
+              v-for="badge in parseBadges(post.badge)"
+              :key="badge"
+              class="feed__badge"
+            >{{ badge }}</span>
             <BlogPostMenu
               v-if="isAdmin"
               :post="post"
@@ -425,6 +446,13 @@ useSeoMeta({
 
 .composer__field {
   width: 100%;
+}
+
+.composer__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
 }
 
 .composer__error {
@@ -608,7 +636,9 @@ useSeoMeta({
 
 .feed__meta-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
   margin-left: auto;
 }

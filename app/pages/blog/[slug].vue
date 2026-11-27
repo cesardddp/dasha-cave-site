@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { marked } from 'marked'
+import { parseBadges } from '~~/shared/utils/badges'
 
 // Detalhe do post via GraphQL (useBlogPost → /api/graphql).
 const route = useRoute()
@@ -7,7 +8,7 @@ const slug = route.params.slug as string
 const { data: post, error } = await useBlogPost(slug)
 
 if (error.value || !post.value) {
-  throw createError({ statusCode: 404, message: 'Not Found', message: 'Post não encontrado', fatal: true })
+  throw createError({ statusCode: 404, message: 'Post não encontrado', fatal: true })
 }
 
 const { loggedIn, user } = useUserSession()
@@ -16,6 +17,9 @@ const deleting = ref(false)
 const actionError = ref('')
 
 const html = computed(() => marked.parse(post.value?.content ?? '', { async: false }))
+
+// O post guarda os badges em um único texto separado por espaço.
+const badges = computed(() => parseBadges(post.value?.badge))
 
 const authors = computed(() => [
   {
@@ -74,12 +78,21 @@ useSeoMeta({
       :title="post.title"
       :description="post.description"
       :date="post.publishedAt"
-      :badge="post.badge ?? undefined"
       :image="post.image ?? undefined"
       :authors="authors"
       variant="soft"
     >
       <template #body>
+        <p v-if="badges.length" class="post-page__badges">
+          <UBadge
+            v-for="badge in badges"
+            :key="badge"
+            color="neutral"
+            variant="subtle"
+            :label="badge"
+          />
+        </p>
+
         <div class="post-page__content" v-html="html" />
       </template>
     </UBlogPost>
@@ -122,6 +135,13 @@ useSeoMeta({
 
 .post-page__content {
   line-height: 1.7;
+}
+
+.post-page__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
 }
 
 .post-page__content :deep(h2) {

@@ -34,7 +34,7 @@ registerEndpoint('/api/graphql', () => ({
         description: 'Aforismos de Tim Peters.',
         content: 'Primeiro parágrafo do post.\n\nSegundo parágrafo com **destaque**.',
         image: null,
-        badge: 'Single',
+        badge: 'Single Destaque',
         publishedAt: '2025-11-14T21:00:00.000Z',
         author: { name: 'Dasha', avatar: null },
       },
@@ -72,6 +72,13 @@ describe('página Blog (listagem)', () => {
     const paragraphs = content.findAll('p')
     expect(paragraphs[1]!.text()).toContain('Segundo parágrafo')
     expect(content.find('strong').text()).toBe('destaque')
+  })
+
+  it('separa em vários badges o texto separado por espaço', async () => {
+    const wrapper = await mountSuspended(BlogIndexPage)
+
+    const badges = wrapper.findAll('.feed__post')[0]!.findAll('.feed__badge')
+    expect(badges.map(badge => badge.text())).toEqual(['Single', 'Destaque'])
   })
 })
 

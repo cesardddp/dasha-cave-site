@@ -17,7 +17,7 @@ registerEndpoint('/api/graphql', event => ({
       description: 'Guitarras densas.',
       content: '## Afrodite\n\n**Afrodite** nasceu de uma noite inteira.',
       image: null,
-      badge: 'Single',
+      badge: 'Single Destaque',
       publishedAt: '2025-11-14T21:00:00.000Z',
       author: { name: 'Dasha', avatar: null, bio: '' },
     },
@@ -39,5 +39,14 @@ describe('página Blog (detalhe)', () => {
     })
     const back = wrapper.find('.post-page__back')
     expect(back.attributes('href')).toBe('/blog')
+  })
+
+  it('renderiza um badge para cada palavra do campo badge', async () => {
+    const wrapper = await mountSuspended(BlogPostPage, {
+      route: { params: { slug: 'afrodite' } },
+    })
+
+    const badges = wrapper.findAll('.post-page__badges [data-slot="label"]')
+    expect(badges.map(badge => badge.text())).toEqual(['Single', 'Destaque'])
   })
 })

@@ -1,9 +1,11 @@
+import { randomBytes } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { dirname, isAbsolute, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/sqlite-proxy'
 import * as schema from '../database/schema'
+import type { ManagedUserRole } from '../../shared/types/user'
 
 /**
  * Drizzle ORM sobre `node:sqlite`: sem build nativo, funciona em Node e Bun.
@@ -31,6 +33,7 @@ function createDrizzle(sqlite: DatabaseSync) {
 }
 
 export type Database = ReturnType<typeof createDrizzle>
+export type { ManagedUserRole }
 
 interface Connection {
   db: Database
@@ -55,7 +58,6 @@ async function initialize(): Promise<Connection> {
 
   await createTables(instance.db, instance.sqlite)
   await seed(instance.db)
-  instance.sqlite.exec('PRAGMA query_only = ON;')
 
   return instance
 }
@@ -70,6 +72,17 @@ export async function useDatabase(): Promise<Database> {
   })
 
   return (await booting).db
+}
+
+/** Conexão SQLite crua, útil para prepared statements que o Drizzle não cobre. */
+export async function useSqlite(): Promise<DatabaseSync> {
+  await useDatabase()
+
+  if (!connection) {
+    throw new Error('O banco de dados não foi inicializado')
+  }
+
+  return connection.sqlite
 }
 
 /** Fecha a conexão SQLite (usado no encerramento do processo). */
@@ -98,6 +111,25 @@ async function createTables(db: Database, sqlite: DatabaseSync) {
     sqlite.exec("alter table users add column role text not null default 'commenter' check (role in ('admin', 'commenter'))")
   }
 
+  if (!userColumns.some(column => column.name === 'email_verified_at')) {
+    sqlite.exec('alter table users add column email_verified_at text')
+    // Contas criadas antes da verificação de e-mail continuam entrando normalmente.
+    sqlite.exec('update users set email_verified_at = created_at where email_verified_at is null')
+  }
+
+  await db.run(sql`
+    create table if not exists auth_tokens (
+      id integer primary key autoincrement,
+      user_id integer not null references users (id) on delete cascade,
+      purpose text not null check (purpose in ('email_verification', 'password_reset')),
+      token_hash text not null unique,
+      expires_at text not null,
+      created_at text not null
+    )
+  `)
+
+  await db.run(sql`create index if not exists auth_tokens_user_purpose_idx on auth_tokens (user_id, purpose)`)
+
   await db.run(sql`
     create table if not exists posts (
       id integer primary key autoincrement,
@@ -112,80 +144,269 @@ async function createTables(db: Database, sqlite: DatabaseSync) {
     )
   `)
 
+  await db.run(sql`
+    create table if not exists oauth_accounts (
+      id integer primary key autoincrement,
+      provider text not null,
+      provider_user_id text not null,
+      user_id integer not null references users (id) on delete cascade,
+      created_at text not null,
+      unique (provider, provider_user_id),
+      unique (user_id, provider)
+    )
+  `)
+
   await db.run(sql`create index if not exists posts_published_at_idx on posts (published_at desc)`)
+}
+
+export interface GoogleAccountProfile {
+  id: string
+  email: string
+  name: string
+  avatar: string | null
+}
+
+export interface AuthAccount {
+  id: number
+  name: string
+  email: string
+  avatar: string | null
+}
+
+function findGoogleAccount(sqlite: DatabaseSync, googleId: string): AuthAccount | undefined {
+  return sqlite.prepare(`
+    select users.id, users.name, users.email, users.avatar
+    from oauth_accounts
+    join users on users.id = oauth_accounts.user_id
+    where oauth_accounts.provider = 'google' and oauth_accounts.provider_user_id = ?
+  `).get(googleId) as AuthAccount | undefined
+}
+
+function findAccountByEmail(sqlite: DatabaseSync, email: string): AuthAccount | undefined {
+  return sqlite.prepare(`
+    select id, name, email, avatar from users where email = ?
+  `).get(email) as AuthAccount | undefined
+}
+
+export function withDatabaseTransaction<T>(sqlite: DatabaseSync, write: () => T): T {
+  sqlite.exec('BEGIN IMMEDIATE;')
+  try {
+    const result = write()
+    sqlite.exec('COMMIT;')
+    return result
+  }
+  catch (cause) {
+    sqlite.exec('ROLLBACK;')
+    throw cause
+  }
+}
+
+export async function createUserAccount(account: {
+  name: string
+  email: string
+  passwordHash: string
+  role?: ManagedUserRole
+  emailVerified?: boolean
+}): Promise<AuthAccount> {
+  const sqlite = await useSqlite()
+
+  const now = new Date().toISOString()
+  const result = sqlite.prepare(`
+    insert into users (name, email, password_hash, role, email_verified_at, created_at)
+    values (?, ?, ?, ?, ?, ?)
+  `).run(
+    account.name,
+    account.email,
+    account.passwordHash,
+    account.role ?? 'commenter',
+    account.emailVerified ? now : null,
+    now,
+  )
+
+  return {
+    id: Number(result.lastInsertRowid),
+    name: account.name,
+    email: account.email,
+    avatar: null,
+  }
+}
+
+export async function updateManagedUserRole(
+  id: number,
+  role: ManagedUserRole,
+  configuredAdminIds: readonly number[],
+): Promise<'updated' | 'not-found' | 'config-admin' | 'last-admin'> {
+  const sqlite = await useSqlite()
+
+  return withDatabaseTransaction(sqlite, () => {
+    const users = sqlite.prepare('select id, role from users').all() as { id: number, role: ManagedUserRole }[]
+    const target = users.find(user => user.id === id)
+    if (!target) return 'not-found'
+    if (configuredAdminIds.includes(id) && role !== 'admin') return 'config-admin'
+
+    const effectiveAdminCount = users.filter(user =>
+      user.role === 'admin' || configuredAdminIds.includes(user.id),
+    ).length
+    const isAdmin = target.role === 'admin' || configuredAdminIds.includes(id)
+    if (isAdmin && role !== 'admin' && effectiveAdminCount <= 1) return 'last-admin'
+
+    sqlite.prepare('update users set role = ? where id = ?').run(role, id)
+    return 'updated'
+  })
+}
+
+export async function deleteManagedUser(
+  id: number,
+  configuredAdminIds: readonly number[],
+): Promise<'deleted' | 'not-found' | 'config-admin' | 'last-admin'> {
+  const sqlite = await useSqlite()
+
+  return withDatabaseTransaction(sqlite, () => {
+    const users = sqlite.prepare('select id, role from users').all() as { id: number, role: ManagedUserRole }[]
+    const target = users.find(user => user.id === id)
+    if (!target) return 'not-found'
+    if (configuredAdminIds.includes(id)) return 'config-admin'
+
+    const effectiveAdminCount = users.filter(user =>
+      user.role === 'admin' || configuredAdminIds.includes(user.id),
+    ).length
+    if (target.role === 'admin' && effectiveAdminCount <= 1) return 'last-admin'
+
+    sqlite.prepare('delete from users where id = ?').run(id)
+    return 'deleted'
+  })
+}
+
+export async function updateManagedUserPassword(id: number, passwordHash: string): Promise<boolean> {
+  const sqlite = await useSqlite()
+
+  const result = sqlite.prepare('update users set password_hash = ? where id = ?').run(passwordHash, id)
+  return result.changes > 0
+}
+
+export interface AccountCredentials {
+  id: number
+  name: string
+  email: string
+  avatar: string | null
+  passwordHash: string
+  emailVerifiedAt: string | null
+}
+
+export async function findCredentialsByEmail(email: string): Promise<AccountCredentials | undefined> {
+  const sqlite = await useSqlite()
+
+  return sqlite.prepare(`
+    select id, name, email, avatar, password_hash as passwordHash, email_verified_at as emailVerifiedAt
+    from users
+    where email = ?
+  `).get(email) as AccountCredentials | undefined
+}
+
+export async function markEmailVerified(id: number): Promise<void> {
+  const sqlite = await useSqlite()
+
+  sqlite.prepare('update users set email_verified_at = ? where id = ? and email_verified_at is null')
+    .run(new Date().toISOString(), id)
+}
+
+export async function getOrCreateGoogleAccount(profile: GoogleAccountProfile): Promise<AuthAccount> {
+  const sqlite = await useSqlite()
+
+  const existingAccount = findGoogleAccount(sqlite, profile.id)
+  if (existingAccount) {
+    return existingAccount
+  }
+
+  const accountByEmail = findAccountByEmail(sqlite, profile.email)
+  const generatedPasswordHash = accountByEmail
+    ? null
+    : await hashPassword(randomBytes(32).toString('base64url'))
+
+  return withDatabaseTransaction(sqlite, () => {
+    const linkedAccount = findGoogleAccount(sqlite, profile.id)
+    if (linkedAccount) {
+      return linkedAccount
+    }
+
+    let account = findAccountByEmail(sqlite, profile.email)
+    if (!account) {
+      if (!generatedPasswordHash) {
+        throw new Error('A conta Google apareceu durante a vinculação, mas o hash não foi gerado')
+      }
+
+      const now = new Date().toISOString()
+      const inserted = sqlite.prepare(`
+        insert into users (name, email, password_hash, avatar, email_verified_at, created_at)
+        values (?, ?, ?, ?, ?, ?)
+      `).run(
+        profile.name,
+        profile.email,
+        generatedPasswordHash,
+        profile.avatar,
+        now,
+        now,
+      )
+      account = {
+        id: Number(inserted.lastInsertRowid),
+        name: profile.name,
+        email: profile.email,
+        avatar: profile.avatar,
+      }
+    }
+    else {
+      // O Google já provou a posse do e-mail.
+      sqlite.prepare('update users set email_verified_at = ? where id = ? and email_verified_at is null')
+        .run(new Date().toISOString(), account.id)
+    }
+
+    sqlite.prepare(`
+      insert into oauth_accounts (provider, provider_user_id, user_id, created_at)
+      values ('google', ?, ?, ?)
+    `).run(profile.id, account.id, new Date().toISOString())
+
+    return account
+  })
 }
 
 const SEED_POSTS = [
   {
-    slug: 'afrodite',
-    title: 'Afrodite: o novo single',
-    description: 'Guitarras densas, batida lenta e um refrão que não sai da cabeça.',
-    image: '/imagens/titulo_capa_afrodite.png',
-    badge: 'Single',
+    slug: 'zen-do-python',
+    title: 'Zen do Python',
+    description: 'Os 19 aforismos de Tim Peters.',
+    image: null,
+    badge: 'Código',
     publishedAt: '2025-11-14T21:00:00.000Z',
-    content: `## Afrodite
+    content: `## Zen do Python
 
-**Afrodite** nasceu de uma noite inteira gravando um riff que não queria ir embora.
+Digite \`import this\` em qualquer interpretador Python e você recebe **O Zen do Python**,
+de Tim Peters: 19 aforismos sobre como escrever código bonito. Dominio público, sabedoria eterna.
 
-A faixa abre com um baixo arrastado, ganha peso no meio e termina em um refrão quase
-sussurrado. É o tipo de música que pede volume alto e um quarto escuro.
+### Os aforismos
 
-### Ficha técnica
+1. **Bonito é melhor que feio.**
+2. **Explícito é melhor que implícito.**
+3. **Simples é melhor que complexo.**
+4. **Complexo é melhor que complicado.**
+5. **Plano é melhor que aninhado.**
+6. **Esparso é melhor que denso.**
+7. **Legibilidade conta.**
+8. **Casos especiais não são especiais o suficiente para quebrar as regras.**
+9. *Embora praticidade vença pureza.*
+10. **Erros nunca devem passar em silêncio.**
+11. *A menos que sejam silenciados explicitamente.*
+12. **Diante da ambiguidade, recuse a tentação de adivinhar.**
+13. **Deveria haver um — e preferencialmente apenas um — jeito óbvio de fazer isso.**
+14. *Embora esse jeito pode não ser óbvio a princípio, a menos que você seja holandês.*
+15. **Agora é melhor que nunca.**
+16. *Embora nunca frequentemente seja melhor que* ***agora*** *mesmo.*
+17. **Se a implementação é difícil de explicar, é uma má ideia.**
+18. **Se a implementação é fácil de explicar, pode ser uma boa ideia.**
+19. **Namespaces são uma ideia genial — vamos fazer mais desses!**
 
-- Produção: Dasha
-- Mixagem: Dasha
-- Gravado na caverna, entre 2 e 4 da manhã
+> Bonito é melhor que feio. — Tim Peters
 
-> "Tudo que eu tinha era um pedal quebrado e teimosia." — Dasha`,
-  },
-  {
-    slug: 'la-calamita',
-    title: 'La Calamita, faixa por faixa',
-    description: 'O que existe por trás de cada uma das sete músicas do EP.',
-    image: '/imagens/titulo_capa_la_calamita.png',
-    badge: 'EP',
-    publishedAt: '2025-09-02T18:30:00.000Z',
-    content: `## La Calamita
-
-Sete faixas, quarenta minutos e uma obsessão: fazer barulho que ainda seja melódico.
-
-### As faixas
-
-1. **Ímã** — abre o EP com uma introdução de bateria crua.
-2. **Ferrugem** — a mais lenta, a mais triste.
-3. **Norte** — a única que nasceu no violão.
-4. **Calamita** — a faixa título, com um final de seis minutos.
-5. **Vidro** — textura de sintetizador e voz quase falada.
-6. **Cinza** — punk, direto, dois minutos.
-7. **Depois** — fecha tudo em silêncio.
-
-O EP foi gravado ao longo de oito meses, em três estúdios diferentes e na sala de casa.`,
-  },
-  {
-    slug: 'como-gravamos-na-caverna',
-    title: 'Como gravamos dentro da caverna',
-    description: 'Um guia honesto de home studio: o que funcionou e o que foi dinheiro jogado fora.',
-    image: '/imagens/dasha_icon.jpg',
-    badge: 'Diário',
-    publishedAt: '2025-06-21T12:00:00.000Z',
-    content: `## Home studio, sem romantismo
-
-Gravar em casa é mais barato e infinitamente mais lento. Depois de dois EPs, algumas
-verdades ficaram claras.
-
-### O que funcionou
-
-- **Uma boa interface** vale mais que cinco plugins.
-- **Tratamento acústico** barato: cobertas, estantes cheias, tapete.
-- **Gravar de noite** — a rua silencia e o ruído de fundo cai.
-
-### O que não funcionou
-
-- Comprar microfones demais antes de aprender a posicionar um.
-- Monitorar com fone de celular.
-- Deixar a mixagem para o último dia.
-
-> O melhor equipamento é o que você já sabe usar.`,
+É um manifesto para qualquer linguagem, não só Python.`,
   },
 ]
 
@@ -196,7 +417,12 @@ async function seed(db: Database) {
   let [author] = await db.select({ id: schema.users.id }).from(schema.users).limit(1)
 
   if (!author) {
-    const password = process.env.SEED_PASSWORD ?? 'dasha-cave'
+    const password = process.env.SEED_PASSWORD
+
+    if (!password) {
+      console.warn('[seed] SEED_PASSWORD ausente; usuário inicial não foi criado.')
+      return
+    }
 
     ;[author] = await db
       .insert(schema.users)
@@ -204,8 +430,10 @@ async function seed(db: Database) {
         name: 'Dasha',
         email: 'dasha@dashacave.com.br',
         passwordHash: await hashPassword(password),
-        avatar: '/imagens/dasha_icon.jpg',
-        bio: 'Anfitriã da caverna. Escreve sobre música pesada, noites longas e o que sobra depois delas.',
+        avatar: '/imagens/dasha_icon.webp',
+        bio: 'Escritore de mundos sombrios e romances.',
+        // A conta inicial já nasce confirmada: ela existe antes do fluxo de verificação.
+        emailVerifiedAt: new Date().toISOString(),
       })
       .returning({ id: schema.users.id })
   }

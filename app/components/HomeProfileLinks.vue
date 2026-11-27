@@ -72,8 +72,7 @@ const bioExpanded = shallowRef(false)
       <NuxtLink
         disabled
         class="home-page__link"
-        to="https://dashacave.com.br/blog/"
-        target="_blank"
+        to="/blog/"
       >
         <Icon name="lucide:book-open-text" class="home-page__link-icon" aria-hidden="true" />
         <span>Blog</span>

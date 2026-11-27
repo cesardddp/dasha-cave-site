@@ -1,5 +1,6 @@
 <template>
   <div class="site-layout">
+    <SiteTopBar />
     <slot />
   </div>
 </template>

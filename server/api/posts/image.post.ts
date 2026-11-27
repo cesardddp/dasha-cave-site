@@ -1,0 +1,20 @@
+import { readMultipartFormData } from 'h3'
+import { savePostImage } from '../../utils/post-images'
+import { requireAdminSession } from '../../utils/user-roles'
+
+export default defineEventHandler(async (event) => {
+  await requireAdminSession(event)
+  const contentLength = Number(getHeader(event, 'content-length'))
+  if (Number.isFinite(contentLength) && contentLength > 6 * 1024 * 1024) {
+    throw createError({ statusCode: 413, message: 'A imagem deve ter até 5 MB' })
+  }
+
+  const files = await readMultipartFormData(event)
+  const image = files?.find(file => file.name === 'image' && file.data.length > 0)
+
+  if (!image) {
+    throw createError({ statusCode: 400, message: 'Selecione uma imagem para enviar' })
+  }
+
+  return { image: await savePostImage(image.data) }
+})

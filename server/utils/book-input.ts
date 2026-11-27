@@ -12,19 +12,19 @@ export function slugifyBookTitle(title: string) {
 
 function stringField(value: unknown, name: string, maximumLength = 500) {
   if (typeof value !== 'string' || value.length > maximumLength) {
-    throw createError({ statusCode: 400, statusMessage: `Campo inválido: ${name}` })
+    throw createError({ statusCode: 400, message: `Campo inválido: ${name}` })
   }
   return value.trim()
 }
 
 function listField(value: unknown, name: string, maximumItems: number, maximumLength: number) {
   if (!Array.isArray(value) || value.length > maximumItems) {
-    throw createError({ statusCode: 400, statusMessage: `Lista inválida: ${name}` })
+    throw createError({ statusCode: 400, message: `Lista inválida: ${name}` })
   }
 
   return value.map((item) => {
     if (typeof item !== 'string' || item.length > maximumLength) {
-      throw createError({ statusCode: 400, statusMessage: `Item inválido em ${name}` })
+      throw createError({ statusCode: 400, message: `Item inválido em ${name}` })
     }
     return item.trim()
   }).filter(Boolean)
@@ -38,7 +38,7 @@ export function normalizeAmazonUrl(value: unknown) {
     url = new URL(rawUrl)
   }
   catch {
-    throw createError({ statusCode: 400, statusMessage: 'Informe um link válido da Amazon Brasil' })
+    throw createError({ statusCode: 400, message: 'Informe um link válido da Amazon Brasil' })
   }
 
   if (
@@ -51,7 +51,7 @@ export function normalizeAmazonUrl(value: unknown) {
   ) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Use um link de produto amazon.com.br com ASIN',
+      message: 'Use um link de produto amazon.com.br com ASIN',
     })
   }
 
@@ -60,7 +60,7 @@ export function normalizeAmazonUrl(value: unknown) {
 
 export function normalizeBookInput(value: unknown): Book {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw createError({ statusCode: 400, statusMessage: 'Dados do livro inválidos' })
+    throw createError({ statusCode: 400, message: 'Dados do livro inválidos' })
   }
 
   const body = value as Record<string, unknown>
@@ -69,7 +69,7 @@ export function normalizeBookInput(value: unknown): Book {
   const image = stringField(body.image ?? '', 'image', 500)
 
   if (!title || slug === 'admin' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    throw createError({ statusCode: 400, statusMessage: 'Título ou endereço do livro inválido' })
+    throw createError({ statusCode: 400, message: 'Título ou endereço do livro inválido' })
   }
 
   if (
@@ -81,17 +81,17 @@ export function normalizeBookInput(value: unknown): Book {
       || image.includes('\\')
     )
   ) {
-    throw createError({ statusCode: 400, statusMessage: 'A imagem deve ser um arquivo local do site' })
+    throw createError({ statusCode: 400, message: 'A imagem deve ser um arquivo local do site' })
   }
 
   const accent = stringField(body.accent ?? '#1a8173', 'accent', 7)
   if (!/^#[\da-f]{6}$/i.test(accent)) {
-    throw createError({ statusCode: 400, statusMessage: 'A cor de destaque deve estar no formato #RRGGBB' })
+    throw createError({ statusCode: 400, message: 'A cor de destaque deve estar no formato #RRGGBB' })
   }
 
   const secondaryAccent = stringField(body.secondaryAccent ?? '#00626f', 'secondaryAccent', 7)
   if (!/^#[\da-f]{6}$/i.test(secondaryAccent)) {
-    throw createError({ statusCode: 400, statusMessage: 'A cor secundária deve estar no formato #RRGGBB' })
+    throw createError({ statusCode: 400, message: 'A cor secundária deve estar no formato #RRGGBB' })
   }
 
   return {

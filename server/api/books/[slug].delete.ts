@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   await requireAdminSession(event)
   const slug = getRouterParam(event, 'slug') ?? ''
   if (!removeBook(slug)) {
-    throw createError({ statusCode: 404, statusMessage: 'Livro não encontrado' })
+    throw createError({ statusCode: 404, message: 'Livro não encontrado' })
   }
   return { deleted: true }
 })

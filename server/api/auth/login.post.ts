@@ -8,14 +8,22 @@ export default defineEventHandler(async (event) => {
   const password = body?.password ?? ''
 
   if (!email || !password) {
-    throw createError({ statusCode: 400, statusMessage: 'E-mail e senha são obrigatórios' })
+    throw createError({ statusCode: 400, message: 'E-mail e senha são obrigatórios' })
   }
 
   const db = await useDatabase()
   const [account] = await db.select().from(users).where(eq(users.email, email)).limit(1)
 
   if (!account || !(await verifyPassword(account.passwordHash, password))) {
-    throw createError({ statusCode: 401, statusMessage: 'E-mail ou senha inválidos' })
+    throw createError({ statusCode: 401, message: 'E-mail ou senha inválidos' })
+  }
+
+  if (!account.emailVerifiedAt) {
+    throw createError({
+      statusCode: 403,
+      message: 'Confirme seu e-mail antes de entrar',
+      data: { code: 'email_not_verified' },
+    })
   }
 
   const role = await readUserRole(event, account.id)

@@ -14,19 +14,18 @@ export function roleForUserId(event: H3Event, id: number): UserRole {
 }
 
 export async function readUserRole(event: H3Event, id: number): Promise<UserRole> {
-  const role = roleForUserId(event, id)
   const db = await useDatabase()
   const [account] = await db
-    .select({ id: users.id })
+    .select({ id: users.id, role: users.role })
     .from(users)
     .where(eq(users.id, id))
     .limit(1)
 
   if (!account) {
-    throw createError({ statusCode: 401, statusMessage: 'A conta desta sessão não existe mais' })
+    throw createError({ statusCode: 401, message: 'A conta desta sessão não existe mais' })
   }
 
-  return role
+  return roleForUserId(event, id) === 'admin' ? 'admin' : account.role
 }
 
 export async function requireAdminSession(event: H3Event) {
@@ -34,7 +33,7 @@ export async function requireAdminSession(event: H3Event) {
   const role = await readUserRole(event, user.id)
 
   if (role !== 'admin') {
-    throw createError({ statusCode: 403, statusMessage: 'Esta ação é permitida apenas para administradores' })
+    throw createError({ statusCode: 403, message: 'Esta ação é permitida apenas para administradores' })
   }
 
   return { ...user, role }

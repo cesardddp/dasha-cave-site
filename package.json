@@ -24,7 +24,7 @@
     "graphql": "^17.1.0",
     "graphql-yoga": "^6.1.1",
     "marked": "^18.2.1",
-    "nitro-graphql": "^1.8.0",
+    "nodemailer": "^10.6.1",
     "nuxt": "^4.6.4",
     "nuxt-auth-utils": "^0.6.2",
     "sharp": "^0.35.5",
@@ -40,8 +40,10 @@
     "@nuxt/test-utils": "^4.4.0",
     "@vue/test-utils": "^2.6.0",
     "happy-dom": "^21.0.4",
+    "mailparser": "^3.15.0",
     "sharp-cli": "^6.1.0",
     "skills-npm": "^4.1.0",
+    "smtp-server": "^3.21.7",
     "vitest": "^5.1.1"
   }
 }

@@ -17,10 +17,21 @@ export default defineEventHandler(async (event) => {
 
   const account = await findCredentialsByEmail(email)
   if (!account || account.emailVerifiedAt) return response
-  if (await isTokenResendThrottled(account.id, 'email_verification')) return response
+  if (await isTokenResendThrottled(account.id, 'email_verification')) {
+    console.info(`[mail] reenvio de confirmação ignorado para ${email}: envio recente`)
+    return response
+  }
 
   const { token } = await issueAuthToken(account.id, 'email_verification')
-  await sendVerificationEmail(event, { name: account.name, email: account.email }, token)
+
+  // A resposta é sempre 202 para não revelar se o e-mail existe, então uma
+  // falha de SMTP não pode virar erro HTTP: fica no log.
+  try {
+    await sendVerificationEmail(event, { name: account.name, email: account.email }, token)
+  }
+  catch (cause) {
+    console.error(`[mail] confirmação não reenviada para ${email}:`, cause)
+  }
 
   return response
 })

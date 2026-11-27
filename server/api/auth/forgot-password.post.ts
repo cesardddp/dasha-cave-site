@@ -17,10 +17,21 @@ export default defineEventHandler(async (event) => {
 
   const account = await findCredentialsByEmail(email)
   if (!account) return response
-  if (await isTokenResendThrottled(account.id, 'password_reset')) return response
+  if (await isTokenResendThrottled(account.id, 'password_reset')) {
+    console.info(`[mail] recuperação de senha ignorada para ${email}: envio recente`)
+    return response
+  }
 
   const { token } = await issueAuthToken(account.id, 'password_reset')
-  await sendPasswordResetEmail(event, { name: account.name, email: account.email }, token)
+
+  // A resposta é sempre 202 para não revelar se o e-mail existe, então uma
+  // falha de SMTP não pode virar erro HTTP: fica no log.
+  try {
+    await sendPasswordResetEmail(event, { name: account.name, email: account.email }, token)
+  }
+  catch (cause) {
+    console.error(`[mail] recuperação de senha não enviada para ${email}:`, cause)
+  }
 
   return response
 })

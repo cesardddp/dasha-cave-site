@@ -1,14 +1,15 @@
-import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { simpleParser } from 'mailparser'
+import { SMTPServer } from 'smtp-server'
 import { afterAll, describe, expect, it } from 'vitest'
 import { fetch, setup } from '@nuxt/test-utils/e2e'
 
 // Seam: confirmação de e-mail e recuperação de senha. O servidor de e-mail é um
-// relay HTTP falso local, então o teste enxerga exatamente o que o app enviaria
-// e consegue recuperar o token do link.
+// SMTP falso local, então o teste exercita o transporte real (Nodemailer) e
+// consegue recuperar o token do link.
 interface CapturedMail {
   from: string
   to: string
@@ -19,23 +20,37 @@ interface CapturedMail {
 
 const outbox: CapturedMail[] = []
 
-const mailServer = createServer((request, response) => {
-  const chunks: Buffer[] = []
-  request.on('data', chunk => chunks.push(chunk as Buffer))
-  request.on('end', () => {
-    try {
-      outbox.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as CapturedMail)
-    }
-    catch {
-      outbox.push({ from: '', to: '', subject: '', html: '', text: '' })
-    }
-    response.writeHead(202, { 'content-type': 'application/json' })
-    response.end('{"queued":true}')
-  })
+const mailServer = new SMTPServer({
+  authOptional: true,
+  disabledCommands: ['STARTTLS'],
+  logger: false,
+  onData(stream, _session, callback) {
+    const chunks: Buffer[] = []
+    stream.on('data', chunk => chunks.push(chunk as Buffer))
+    stream.on('end', async () => {
+      try {
+        const parsed = await simpleParser(Buffer.concat(chunks))
+        const addresses = (value?: { value?: Array<{ address?: string }> }) =>
+          (value?.value ?? []).map(entry => entry.address ?? '').filter(Boolean).join(', ')
+        outbox.push({
+          from: addresses(parsed.from),
+          to: addresses(parsed.to),
+          subject: parsed.subject ?? '',
+          html: typeof parsed.html === 'string' ? parsed.html : '',
+          text: parsed.text ?? '',
+        })
+      }
+      catch {
+        outbox.push({ from: '', to: '', subject: '', html: '', text: '' })
+      }
+      callback()
+    })
+    stream.on('error', error => callback(error as Error))
+  },
 })
 
 await new Promise<void>(resolve => mailServer.listen(0, '127.0.0.1', resolve))
-const mailEndpoint = `http://127.0.0.1:${(mailServer.address() as AddressInfo).port}/enviar`
+const smtpPort = (mailServer.server.address() as AddressInfo).port
 
 const databaseDir = mkdtempSync(join(tmpdir(), 'dasha-auth-mail-'))
 const databasePath = join(databaseDir, 'blog.sqlite')
@@ -47,7 +62,10 @@ await setup({
     NUXT_DATABASE_PATH: databasePath,
     NUXT_APP_SECRET: 'teste-de-integracao-da-verificacao-de-email-1234567890',
     NUXT_ADMIN_USER_IDS: '',
-    NUXT_MAIL_ENDPOINT: mailEndpoint,
+    NUXT_SMTP_HOST: '127.0.0.1',
+    NUXT_SMTP_PORT: String(smtpPort),
+    NUXT_SMTP_USER: '',
+    NUXT_SMTP_PASS: '',
     NUXT_MAIL_FROM: 'Caverna da Dasha <nao-responda@dashacave.test>',
     NUXT_PUBLIC_SITE_URL: 'https://dashacave.test',
   },

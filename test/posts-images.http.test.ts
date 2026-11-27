@@ -20,6 +20,8 @@ await setup({
     NUXT_DATABASE_PATH: databasePath,
     NUXT_APP_SECRET: 'teste-de-integracao-das-imagens-de-post-1234567890',
     NUXT_ADMIN_USER_IDS: '',
+    // Sem SMTP: o cadastro não pode depender do servidor real do `.env`.
+    NUXT_SMTP_HOST: '',
   },
 })
 

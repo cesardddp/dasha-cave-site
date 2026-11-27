@@ -42,7 +42,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const { token } = await issueAuthToken(account.id, 'email_verification')
-  await sendVerificationEmail(event, { name: account.name, email: account.email }, token)
+
+  try {
+    await sendVerificationEmail(event, { name: account.name, email: account.email }, token)
+  }
+  catch (cause) {
+    // A conta já existe e ficou sem confirmação; o usuário pode reenviar depois.
+    console.error(`[mail] cadastro de ${account.email} criado, mas a confirmação não foi enviada:`, cause)
+    throw cause
+  }
+
   setResponseStatus(event, 201)
   return { email: account.email, verificationSent: true }
 })

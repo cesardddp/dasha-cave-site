@@ -11,22 +11,21 @@ function asText(value: unknown): string {
 function dataTexts(data: unknown): string[] {
   if (!data || typeof data !== 'object') return []
   const record = data as Record<string, unknown>
-  return [asText(record.message), asText(record.message)]
+  return [asText(record.message), asText(record.statusMessage)]
 }
 
 /**
  * Extrai a mensagem exibível de um erro.
  *
  * Lê primeiro o corpo JSON devolvido pelo servidor: sob HTTP/2 não existe reason
- * phrase, então `message`/`statusText` do ofetch chegam vazios em produção.
+ * phrase, então `statusMessage`/`statusText` do ofetch chegam vazios em produção.
  */
 export function getErrorMessage(cause: unknown, fallback: string): string {
   if (typeof cause === 'string') return asText(cause) || fallback
   if (!cause || typeof cause !== 'object') return fallback
 
-  const { data, message, message } = cause as {
+  const { data, message } = cause as {
     data?: unknown
-    message?: unknown
     message?: unknown
   }
   const transport = asText(message)

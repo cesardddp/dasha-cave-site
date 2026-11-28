@@ -317,7 +317,7 @@ useSeoMeta({
     </p>
 
     <div v-else-if="postsError" class="blog-page__empty">
-      <p>{{ getErrorMessage(postsError, 'Não foi possível carregar os posts.') }}</p>
+      <p>Não foi possível carregar os posts agora.</p>
       <UButton color="neutral" variant="ghost" @click="refreshPosts()">
         Tentar novamente
       </UButton>

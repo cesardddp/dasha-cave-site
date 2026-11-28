@@ -60,6 +60,26 @@ describe('GraphQL: query posts', () => {
   })
 })
 
+describe('GraphQL: corpo idêntico ao enviado pelo browser', () => {
+  it('aceita query nomeada com variables (formato do gqlFetch)', async () => {
+    // gqlFetch() manda sempre { query, variables }. O corpo precisa chegar
+    // intacto ao Yoga em qualquer runtime — no preset `bun` o Nitro entrega o
+    // body como ArrayBuffer e a ponte antiga (req/res do Node) o descartava,
+    // devolvendo 400 em toda navegação do cliente.
+    const response = await $fetch('/api/graphql', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: {
+        query: 'query PostsQuery { posts { id slug title } }',
+        variables: {},
+      },
+    }) as { data?: { posts?: Array<{ slug: string }> }, errors?: unknown[] }
+
+    expect(response.errors).toBeUndefined()
+    expect(response.data?.posts?.length).toBeGreaterThan(0)
+  })
+})
+
 describe('GraphQL: query postBySlug', () => {
   it('retorna um post pelo slug', async () => {
     const { data, errors } = await gql('{ postBySlug(slug: "zen-do-python") { title description author { bio } } }')
